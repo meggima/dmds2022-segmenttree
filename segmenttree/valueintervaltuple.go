@@ -1,6 +1,6 @@
 package segmenttree
 
 type ValueIntervalTuple struct {
-	value    Float
+	value    Addable
 	interval Interval
 }

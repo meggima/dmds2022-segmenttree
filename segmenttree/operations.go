@@ -53,8 +53,8 @@ func (x AverageTuple) Add(y AverageTuple) AverageTuple {
 
 type Float float32
 
-func (x Float) Add(y Float) Float {
-	return x + y
+func (x Float) Add(y Addable) Addable {
+	return x + y.(Float)
 }
 
 func (x Float) Compare(y Float) int {

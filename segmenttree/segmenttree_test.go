@@ -10,6 +10,17 @@ const (
 	BRANCHING_FACTOR uint32 = 4
 )
 
+var testDataGetAtInstant = []struct {
+	instant       uint32
+	expectedValue Float
+}{
+	{19, Float(6)},
+	{49, Float(1)},
+	{28, Float(7)},
+	{0, Float(0)},
+	{7, Float(2)},
+}
+
 // Yang et. al 2003, 3.1
 // Lookup 19
 func TestGetAtInstant(t *testing.T) {
@@ -18,11 +29,13 @@ func TestGetAtInstant(t *testing.T) {
 
 	tree := setupTree()
 
-	// Act
-	res := tree.GetAtInstant(19)
+	for _, testData := range testDataGetAtInstant {
+		// Act
+		res := tree.GetAtInstant(testData.instant)
 
-	// Assert
-	assert.Equal(float32(6), res)
+		// Assert
+		assert.Equal(testData.expectedValue, res)
+	}
 }
 
 // Yang et. al 2003, 3.2
@@ -48,7 +61,7 @@ func TestNewTree(t *testing.T) {
 	assert := assert.New(t)
 
 	// Act
-	tree := NewSegmentTree(BRANCHING_FACTOR, Sum)
+	tree := NewSegmentTree(BRANCHING_FACTOR, Aggregate{Sum, Float(0)})
 
 	// Assert
 	n0 := tree.root
@@ -319,39 +332,43 @@ func setupTree() *SegmentTreeImpl {
 		nodeId:   1,
 		n:        2,
 		keys:     []uint32{5, 10, 0},
-		values:   []Float{Float(0), Float(2), Float(8), Float(-1)},
+		values:   []Addable{Float(0), Float(2), Float(8), Float(-1)},
 		children: []*Node{nil, nil, nil, nil},
+		isLeaf:   true,
 	}
 
 	n2 := &Node{
 		nodeId:   2,
 		n:        1,
 		keys:     []uint32{20, 0, 0},
-		values:   []Float{Float(5), Float(6), Float(-1), Float(-1)},
+		values:   []Addable{Float(5), Float(6), Float(-1), Float(-1)},
 		children: []*Node{nil, nil, nil, nil},
+		isLeaf:   true,
 	}
 
 	n3 := &Node{
 		nodeId:   3,
 		n:        2,
 		keys:     []uint32{35, 40, 0},
-		values:   []Float{Float(4), Float(8), Float(5), Float(-1)},
+		values:   []Addable{Float(4), Float(8), Float(5), Float(-1)},
 		children: []*Node{nil, nil, nil, nil},
+		isLeaf:   true,
 	}
 
 	n4 := &Node{
 		nodeId:   4,
 		n:        1,
 		keys:     []uint32{50, 0, 0},
-		values:   []Float{Float(1), Float(0), Float(-1), Float(-1)},
+		values:   []Addable{Float(1), Float(0), Float(-1), Float(-1)},
 		children: []*Node{nil, nil, nil, nil},
+		isLeaf:   true,
 	}
 
 	n0 := &Node{
 		nodeId:   0,
 		n:        3,
 		keys:     []uint32{15, 30, 45},
-		values:   []Float{Float(0), Float(1), Float(0), Float(0)},
+		values:   []Addable{Float(0), Float(1), Float(0), Float(0)},
 		children: []*Node{n1, n2, n3, n4},
 		isLeaf:   false,
 	}
@@ -364,7 +381,7 @@ func setupTree() *SegmentTreeImpl {
 
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		operation:       Sum,
+		aggregate:       Aggregate{Sum, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 
