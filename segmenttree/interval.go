@@ -29,3 +29,8 @@ func (interval Interval) IntersectionWith(otherInterval Interval) Interval {
 
 	return NewInterval(start, end)
 }
+
+func (interval Interval) IsSubsetOf(otherInterval Interval) bool {
+	return interval.start >= otherInterval.start &&
+		interval.end <= otherInterval.end
+}

@@ -1,8 +1,9 @@
 package segmenttree
 
 type Aggregate struct {
-	operation      func(Addable, Addable) Addable
-	neutralElement Addable
+	operation       func(Addable, Addable) Addable
+	additionElement func(Addable) Addable
+	neutralElement  Addable
 }
 
 type SegmentTreeImpl struct {
@@ -28,7 +29,6 @@ func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImp
 func (t *SegmentTreeImpl) newNode() *Node {
 	node := &Node{
 		nodeId:   t.nextNodeId,
-		n:        0,
 		keys:     make([]uint32, t.branchingFactor+1),  // + 1 to account for an interval being split into three intervals
 		values:   make([]Addable, t.branchingFactor+2), // + 2 to account for an interval being split into three intervals
 		children: make([]*Node, t.branchingFactor+2),   // + 2 to account for an interval being split into three intervals
@@ -51,7 +51,9 @@ func (tree *SegmentTreeImpl) GetWithinInterval(interval Interval) []ValueInterva
 }
 
 func (tree *SegmentTreeImpl) Insert(value ValueIntervalTuple) {
+	valueToInsert := tree.aggregate.additionElement(value.value)
 
+	tree.insert(tree.root, ValueIntervalTuple{value: valueToInsert, interval: value.interval})
 }
 
 func (tree *SegmentTreeImpl) Delete(value ValueIntervalTuple) {
@@ -73,19 +75,53 @@ func (tree *SegmentTreeImpl) rangeQuery(node *Node, interval Interval, value Add
 
 	for index, nodeInterval := range node.getIntervals() {
 		intersection := interval.IntersectionWith(nodeInterval)
-		if intersection != EmptyInterval {
-			if node.isLeaf {
-				newTuple := ValueIntervalTuple{
-					value:    tree.aggregate.operation(node.values[index], value),
-					interval: intersection,
-				}
-				result = append(result, newTuple)
-			} else {
-				childResult := tree.rangeQuery(node.children[index], interval, tree.aggregate.operation(node.values[index], value))
-				result = append(result, childResult...)
+
+		if intersection == EmptyInterval {
+			continue
+		}
+
+		if node.isLeaf {
+			newTuple := ValueIntervalTuple{
+				value:    tree.aggregate.operation(node.values[index], value),
+				interval: intersection,
 			}
+			result = append(result, newTuple)
+		} else {
+			childResult := tree.rangeQuery(node.children[index], interval, tree.aggregate.operation(node.values[index], value))
+			result = append(result, childResult...)
 		}
 	}
 
 	return result
+}
+
+func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple) {
+	has_next_interval := true
+	index := 0
+	intervals := node.getIntervals()
+	for has_next_interval {
+		nodeInterval := intervals[index]
+
+		intersection := nodeInterval.IntersectionWith(tupleToInsert.interval)
+
+		if intersection == EmptyInterval {
+			// Do nothing
+		} else if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
+			// Do nothing
+		} else if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
+			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
+		} else {
+			if !node.isLeaf {
+				tree.insert(node.children[index], tupleToInsert)
+			} else {
+				index += node.insert(index, tupleToInsert)
+				intervals = node.getIntervals() // recalculate as they might have changed
+			}
+		}
+		if index+1 >= len(intervals) {
+			has_next_interval = false
+		}
+		index++
+	}
+
 }
