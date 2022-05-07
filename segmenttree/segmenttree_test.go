@@ -61,7 +61,7 @@ func TestNewTree(t *testing.T) {
 	assert := assert.New(t)
 
 	// Act
-	tree := NewSegmentTree(BRANCHING_FACTOR, Aggregate{Sum, Float(0)})
+	tree := NewSegmentTree(BRANCHING_FACTOR, Aggregate{Sum, Identity, Float(0)})
 
 	// Assert
 	n0 := tree.root
@@ -381,7 +381,7 @@ func setupTree() *SegmentTreeImpl {
 
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		aggregate:       Aggregate{Sum, Float(0)},
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 

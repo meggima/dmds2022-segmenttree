@@ -76,3 +76,7 @@ func (node *Node) getIntervals() []Interval {
 
 	return intervals
 }
+
+func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) {
+
+}

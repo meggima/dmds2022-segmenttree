@@ -1,8 +1,9 @@
 package segmenttree
 
 type Aggregate struct {
-	operation      func(Addable, Addable) Addable
-	neutralElement Addable
+	operation       func(Addable, Addable) Addable
+	additionElement func(Addable) Addable
+	neutralElement  Addable
 }
 
 type SegmentTreeImpl struct {
@@ -51,7 +52,9 @@ func (tree *SegmentTreeImpl) GetWithinInterval(interval Interval) []ValueInterva
 }
 
 func (tree *SegmentTreeImpl) Insert(value ValueIntervalTuple) {
+	valueToInsert := tree.aggregate.additionElement(value.value)
 
+	tree.insert(tree.root, ValueIntervalTuple{value: valueToInsert, interval: value.interval})
 }
 
 func (tree *SegmentTreeImpl) Delete(value ValueIntervalTuple) {
@@ -73,19 +76,46 @@ func (tree *SegmentTreeImpl) rangeQuery(node *Node, interval Interval, value Add
 
 	for index, nodeInterval := range node.getIntervals() {
 		intersection := interval.IntersectionWith(nodeInterval)
-		if intersection != EmptyInterval {
-			if node.isLeaf {
-				newTuple := ValueIntervalTuple{
-					value:    tree.aggregate.operation(node.values[index], value),
-					interval: intersection,
-				}
-				result = append(result, newTuple)
-			} else {
-				childResult := tree.rangeQuery(node.children[index], interval, tree.aggregate.operation(node.values[index], value))
-				result = append(result, childResult...)
+
+		if intersection == EmptyInterval {
+			continue
+		}
+
+		if node.isLeaf {
+			newTuple := ValueIntervalTuple{
+				value:    tree.aggregate.operation(node.values[index], value),
+				interval: intersection,
 			}
+			result = append(result, newTuple)
+		} else {
+			childResult := tree.rangeQuery(node.children[index], interval, tree.aggregate.operation(node.values[index], value))
+			result = append(result, childResult...)
 		}
 	}
 
 	return result
+}
+
+func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple) {
+	for index, nodeInterval := range node.getIntervals() {
+		intersection := nodeInterval.IntersectionWith(tupleToInsert.interval)
+
+		if intersection == EmptyInterval {
+			continue
+		}
+
+		if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
+			continue
+		}
+
+		if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
+			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
+		} else {
+			if !node.isLeaf {
+				tree.insert(node.children[index], tupleToInsert)
+			} else {
+				node.insert(index, tupleToInsert)
+			}
+		}
+	}
 }

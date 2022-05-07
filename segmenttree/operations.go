@@ -31,6 +31,10 @@ func Max(x Comparable, y Comparable) Comparable {
 	return y
 }
 
+func Identity(v Addable) Addable {
+	return v
+}
+
 type Comparable interface {
 	Compare(x Comparable) int
 }
