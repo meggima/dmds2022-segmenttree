@@ -376,3 +376,139 @@ func setupTree() *SegmentTreeImpl {
 
 	return tree
 }
+
+// Yang et. al 2003, Fig 19
+func TestSumDosageScenarioInsert(t *testing.T) {
+
+	// Arrange
+	assert := assert.New(t)
+
+	n0 := &Node{
+		nodeId:   0,
+		n:        3,
+		keys:     []uint32{},
+		values:   []Float{Float(0)},
+		children: []*Node{},
+		isLeaf:   false,
+	}
+
+	n0.parent = nil
+	tree := &SegmentTreeImpl{
+		root:            n0,
+		operation:       Sum,
+		branchingFactor: BRANCHING_FACTOR,
+	}
+
+	n0.tree = tree
+
+	// Act
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
+	tree.Insert(ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}})
+	tree.Insert(ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}})
+	// split nodes
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 5, end: 15}})
+	// split nodes
+	tree.Insert(ValueIntervalTuple{value: Float(4), interval: Interval{start: 35, end: 45}})
+	tree.Insert(ValueIntervalTuple{value: Float(1), interval: Interval{start: 10, end: 50}})
+	// split nodes
+
+	// Assert
+	n0 = tree.root
+	assert.Len(n0.children, 4)
+	n00 := n0.children[0]
+	n01 := n0.children[1]
+	n02 := n0.children[2]
+	n03 := n0.children[3]
+
+	assert.Equal(uint32(15), n0.keys[0])
+	assert.Equal(uint32(30), n0.keys[1])
+	assert.Equal(uint32(45), n0.keys[2])
+	assert.Len(n0.keys, 3)
+	assert.Equal(Float(0), n0.values[0])
+	assert.Equal(Float(1), n0.values[1])
+	assert.Equal(Float(0), n0.values[2])
+	assert.Equal(Float(0), n0.values[3])
+	assert.Len(n0.values, 4)
+
+	assert.Equal(uint32(5), n00.keys[0])
+	assert.Equal(uint32(10), n00.keys[1])
+	assert.Len(n00.keys, 2)
+	assert.Equal(Float(0), n00.values[0])
+	assert.Equal(Float(2), n00.values[1])
+	assert.Equal(Float(8), n00.values[2])
+	assert.Len(n00.values, 3)
+	assert.Len(n00.children, 0)
+
+	assert.Equal(uint32(20), n01.keys[0])
+	assert.Len(n01.keys, 1)
+	assert.Equal(Float(5), n01.values[0])
+	assert.Equal(Float(6), n01.values[1])
+	assert.Len(n01.values, 2)
+	assert.Len(n01.children, 0)
+
+	assert.Equal(uint32(35), n02.keys[0])
+	assert.Equal(uint32(40), n02.keys[1])
+	assert.Len(n02.keys, 2)
+	assert.Equal(Float(4), n02.values[0])
+	assert.Equal(Float(8), n02.values[1])
+	assert.Equal(Float(5), n02.values[2])
+	assert.Len(n02.values, 3)
+	assert.Len(n02.children, 0)
+
+	assert.Equal(uint32(50), n03.keys[0])
+	assert.Len(n03.keys, 1)
+	assert.Equal(Float(1), n03.values[0])
+	assert.Equal(Float(0), n03.values[1])
+	assert.Len(n03.values, 2)
+	assert.Len(n03.children, 0)
+}
+
+// Yang et. al 2003, Fig 19
+func TestSumDosageScenarioDelete(t *testing.T) {
+
+	// Arrange
+	assert := assert.New(t)
+
+	n0 := &Node{
+		nodeId:   0,
+		n:        3,
+		keys:     []uint32{},
+		values:   []Float{},
+		children: []*Node{},
+		isLeaf:   false,
+	}
+	n0.parent = nil
+	tree := &SegmentTreeImpl{
+		root:            n0,
+		operation:       Sum,
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	n0.tree = tree
+
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
+	tree.Insert(ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}})
+	tree.Insert(ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}})
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 5, end: 15}})
+	tree.Insert(ValueIntervalTuple{value: Float(4), interval: Interval{start: 35, end: 45}})
+	tree.Insert(ValueIntervalTuple{value: Float(1), interval: Interval{start: 10, end: 50}})
+
+	// Act
+	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 10, end: 50}})
+	tree.Delete(ValueIntervalTuple{value: Float(4), interval: Interval{start: 35, end: 45}})
+	// merge and remove node
+	tree.Delete(ValueIntervalTuple{value: Float(2), interval: Interval{start: 5, end: 15}})
+	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}})
+	// merge and remove node
+	tree.Delete(ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}})
+	// merge and remove node
+	tree.Delete(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
+	// empty tree
+
+	// Assert
+	n0 = tree.root
+
+	assert.Len(n0.keys, 0)
+	assert.Equal(Float(0), n0.values[0])
+	assert.Len(n0.values, 0)
+	assert.Len(n0.children, 0)
+}
