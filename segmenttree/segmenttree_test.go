@@ -404,7 +404,7 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 		nodeId:   0,
 		n:        3,
 		keys:     []uint32{},
-		values:   []Float{Float(0)},
+		values:   []Addable{Float(0)},
 		children: []*Node{},
 		isLeaf:   false,
 	}
@@ -412,7 +412,7 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		operation:       Sum,
+		aggregate:       Aggregate{operation: Sum, neutralElement: Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 
@@ -490,14 +490,14 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 		nodeId:   0,
 		n:        3,
 		keys:     []uint32{},
-		values:   []Float{},
+		values:   []Addable{},
 		children: []*Node{},
 		isLeaf:   false,
 	}
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		operation:       Sum,
+		aggregate:       Aggregate{operation: Sum, neutralElement: Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	n0.tree = tree
