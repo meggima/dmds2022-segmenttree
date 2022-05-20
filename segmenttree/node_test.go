@@ -219,7 +219,7 @@ func TestInsertEmptyNode(t *testing.T) {
 		keys:   []uint32{},
 		values: []Addable{Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -240,7 +240,7 @@ func TestInsertEmptyNode(t *testing.T) {
 func TestInsertSelfContained1(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -277,7 +277,7 @@ func TestInsertSelfContained1(t *testing.T) {
 func TestInsertSelfContained2(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -314,7 +314,7 @@ func TestInsertSelfContained2(t *testing.T) {
 func TestInsertSelfContained3(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -351,7 +351,7 @@ func TestInsertSelfContained3(t *testing.T) {
 func TestInsertNodeIntervalLeftLarger1(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -386,7 +386,7 @@ func TestInsertNodeIntervalLeftLarger1(t *testing.T) {
 func TestInsertNodeIntervalLeftLarger2(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -421,7 +421,7 @@ func TestInsertNodeIntervalLeftLarger2(t *testing.T) {
 func TestInsertNodeIntervalLeftLarger3(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -456,7 +456,7 @@ func TestInsertNodeIntervalLeftLarger3(t *testing.T) {
 func TestInsertNodeIntervalRightLarger1(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -491,7 +491,7 @@ func TestInsertNodeIntervalRightLarger1(t *testing.T) {
 func TestInsertNodeIntervalRightLarger2(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -526,7 +526,7 @@ func TestInsertNodeIntervalRightLarger2(t *testing.T) {
 func TestInsertNodeIntervalRightLarger3(t *testing.T) {
 	// Arrange
 	tree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	node := &Node{
@@ -564,7 +564,7 @@ func TestInsertMatchingStartPoint1(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -589,7 +589,7 @@ func TestInsertMatchingStartPoint2IntervallIndex1(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -614,7 +614,7 @@ func TestInsertMatchingStartPoint3(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -639,7 +639,7 @@ func TestInsertMatchingEndPoint1(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -664,7 +664,7 @@ func TestInsertMatchingEndPoint2(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -689,7 +689,7 @@ func TestInsertMatchingEndPoint3(t *testing.T) {
 		keys:   []uint32{10, 40},
 		values: []Addable{Float(0), Float(2), Float(0)},
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -711,7 +711,7 @@ func TestInsertMatchingEndPoint3(t *testing.T) {
 func TestSplitRootNodeWithOddNumberOfKeys(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{
@@ -757,7 +757,7 @@ func TestSplitRootNodeWithOddNumberOfKeys(t *testing.T) {
 func TestSplitRootNodeWithEvenNumberOfKeysBook(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{
@@ -799,7 +799,7 @@ func TestSplitRootNodeWithEvenNumberOfKeysBook(t *testing.T) {
 func TestSplitNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{
@@ -882,7 +882,7 @@ func TestSplitNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 func TestSplitMostRightNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{
@@ -963,7 +963,7 @@ func TestSplitMostRightNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 func TestSplitMostLefNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{
@@ -1027,7 +1027,7 @@ func TestSplitMostLefNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 func TestSplitNonRootNodeIsLeafAndSplitsParentWhichIsNoLeaf(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: 4,
 	}
 	n0 := &Node{

@@ -4,12 +4,24 @@ func Sum(x Addable, y Addable) Addable {
 	return x.Add(y)
 }
 
+func InverseSum(x Addable, y Addable) Addable {
+	return x.Subtract(y)
+}
+
 func Count(x Addable, y Addable) Addable {
 	return x.Add(y)
 }
 
+func InverseCount(x Addable, y Addable) Addable {
+	return x.Subtract(y)
+}
+
 func Average(x Addable, y Addable) Addable {
 	return x.Add(y)
+}
+
+func InverseAverage(x Addable, y Addable) Addable {
+	return x.Subtract(y)
 }
 
 func Min(x Comparable, y Comparable) Comparable {
@@ -41,6 +53,7 @@ type Comparable interface {
 
 type Addable interface {
 	Add(x Addable) Addable
+	Subtract(x Addable) Addable
 }
 
 type AverageTuple struct {
@@ -48,10 +61,17 @@ type AverageTuple struct {
 	Count int
 }
 
-func (x AverageTuple) Add(y AverageTuple) AverageTuple {
+func (x AverageTuple) Add(y Addable) Addable {
 	return AverageTuple{
-		Sum:   x.Sum + y.Sum,
-		Count: x.Count + y.Count,
+		Sum:   x.Sum + y.(AverageTuple).Sum,
+		Count: x.Count + y.(AverageTuple).Count,
+	}
+}
+
+func (x AverageTuple) Subtract(y Addable) Addable {
+	return AverageTuple{
+		Sum:   x.Sum - y.(AverageTuple).Sum,
+		Count: x.Count - y.(AverageTuple).Count,
 	}
 }
 
@@ -59,6 +79,10 @@ type Float float32
 
 func (x Float) Add(y Addable) Addable {
 	return x + y.(Float)
+}
+
+func (x Float) Subtract(y Addable) Addable {
+	return x - y.(Float)
 }
 
 func (x Float) Compare(y Float) int {

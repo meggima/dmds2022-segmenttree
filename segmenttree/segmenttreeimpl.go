@@ -1,11 +1,5 @@
 package segmenttree
 
-type Aggregate struct {
-	operation       func(Addable, Addable) Addable
-	additionElement func(Addable) Addable
-	neutralElement  Addable
-}
-
 type SegmentTreeImpl struct {
 	root            *Node
 	aggregate       Aggregate
@@ -19,16 +13,16 @@ func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImp
 	}
 
 	tree.root = tree.newNode()
-	tree.root.values[0] = Float(0)
+	tree.root.values = append(tree.root.values, Float(0))
 
 	return tree
 }
 
 func (t *SegmentTreeImpl) newNode() *Node {
 	node := &Node{
-		keys:     make([]uint32, t.branchingFactor+1),  // + 1 to account for an interval being split into three intervals
-		values:   make([]Addable, t.branchingFactor+2), // + 2 to account for an interval being split into three intervals
-		children: make([]*Node, t.branchingFactor+2),   // + 2 to account for an interval being split into three intervals
+		keys:     make([]uint32, 0, t.branchingFactor+1),  // + 1 to account for an interval being split into three intervals
+		values:   make([]Addable, 0, t.branchingFactor+2), // + 2 to account for an interval being split into three intervals
+		children: make([]*Node, 0, t.branchingFactor+2),   // + 2 to account for an interval being split into three intervals
 		isLeaf:   true,
 		parent:   nil,
 		tree:     t,
@@ -53,6 +47,23 @@ func (tree *SegmentTreeImpl) Insert(value ValueIntervalTuple) {
 
 func (tree *SegmentTreeImpl) Delete(value ValueIntervalTuple) {
 
+}
+
+func (tree *SegmentTreeImpl) InsertRange(values []ValueIntervalTuple) {
+	if tree.root.size() > 0 {
+		panic("Cannot insert a range into a non-empty tree")
+	}
+
+	tuples := createAndSortValueTimeTuples(tree.aggregate, values)
+
+	currentValue := tree.aggregate.neutralElement
+
+	for _, tuple := range tuples {
+
+		currentValue = tree.aggregate.operation(currentValue, tuple.value)
+
+		tree.root.insertTuple(tuple.time, currentValue)
+	}
 }
 
 func (tree *SegmentTreeImpl) lookup(node *Node, instant uint32) Addable {
@@ -121,5 +132,4 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 	if node.size()+1 > tree.branchingFactor {
 		node.split()
 	}
-
 }

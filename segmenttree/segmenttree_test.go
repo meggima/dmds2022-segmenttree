@@ -1,6 +1,7 @@
 package segmenttree
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,12 +57,34 @@ func TestGetWithinInterval(t *testing.T) {
 	assert.Contains(res, ValueIntervalTuple{value: Float(7), interval: Interval{start: 20, end: 28}})
 }
 
+func TestGetWithinIntervalWholeRange(t *testing.T) {
+	// Arrange
+	tree := setupTree()
+
+	// Act
+	result := tree.GetWithinInterval(Interval{start: 0, end: math.MaxUint32})
+
+	// Assert
+	assert.Len(t, result, 10)
+
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(0, 5), value: Float(0)}, result[0])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(5, 10), value: Float(2)}, result[1])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(10, 15), value: Float(8)}, result[2])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(15, 20), value: Float(6)}, result[3])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(20, 30), value: Float(7)}, result[4])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(30, 35), value: Float(4)}, result[5])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(35, 40), value: Float(8)}, result[6])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(40, 45), value: Float(5)}, result[7])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(45, 50), value: Float(1)}, result[8])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(50, math.MaxUint32), value: Float(0)}, result[9])
+}
+
 func TestNewTree(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
 	// Act
-	tree := NewSegmentTree(BRANCHING_FACTOR, Aggregate{Sum, Identity, Float(0)})
+	tree := NewSegmentTree(BRANCHING_FACTOR, Aggregate{Sum, InverseSum, Identity, Float(0)})
 
 	// Assert
 	n0 := tree.root
@@ -247,7 +270,7 @@ func TestInsertTwiceSameRangeSimpleElement(t *testing.T) {
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	n0.tree = tree
@@ -266,7 +289,7 @@ func TestInsertMatchingEndPoint4(t *testing.T) {
 		values: []Addable{Float(0), Float(5), Float(2), Float(0)},
 		isLeaf: true,
 		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 			branchingFactor: BRANCHING_FACTOR,
 		},
 	}
@@ -436,7 +459,7 @@ func setupTree() *SegmentTreeImpl {
 
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 
@@ -465,8 +488,8 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
-		branchingFactor: 4,
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
 	}
 
 	n0.tree = tree
@@ -548,7 +571,7 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		aggregate:       Aggregate{Sum, InverseSum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	n0.tree = tree
@@ -579,4 +602,39 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 	assert.Equal(Float(0), n0.values[0])
 	assert.Len(n0.values, 0)
 	assert.Len(n0.children, 0)
+}
+
+func TestInsertRange(t *testing.T) {
+	// Arrange
+	aggregate := Aggregate{Sum, InverseSum, Identity, Float(0)}
+
+	var testData []ValueIntervalTuple = []ValueIntervalTuple{
+		{interval: NewInterval(10, 40), value: Float(2)},
+		{interval: NewInterval(10, 30), value: Float(3)},
+		{interval: NewInterval(20, 40), value: Float(1)},
+		{interval: NewInterval(5, 15), value: Float(2)},
+		{interval: NewInterval(35, 45), value: Float(4)},
+		{interval: NewInterval(10, 50), value: Float(1)},
+	}
+
+	tree := NewSegmentTree(BRANCHING_FACTOR, aggregate)
+
+	// Act
+	tree.InsertRange(testData)
+
+	// Assert
+	result := tree.GetWithinInterval(NewInterval(0, math.MaxUint32))
+
+	assert.Len(t, result, 10)
+
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(0, 5), value: Float(0)}, result[0])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(5, 10), value: Float(2)}, result[1])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(10, 15), value: Float(8)}, result[2])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(15, 20), value: Float(6)}, result[3])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(20, 30), value: Float(7)}, result[4])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(30, 35), value: Float(4)}, result[5])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(35, 40), value: Float(8)}, result[6])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(40, 45), value: Float(5)}, result[7])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(45, 50), value: Float(1)}, result[8])
+	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(50, math.MaxUint32), value: Float(0)}, result[9])
 }
