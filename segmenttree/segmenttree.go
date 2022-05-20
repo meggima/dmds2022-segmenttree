@@ -5,4 +5,5 @@ type SegmentTree interface {
 	GetWithinInterval(interval Interval) []ValueIntervalTuple
 	Insert(value ValueIntervalTuple)
 	Delete(value ValueIntervalTuple)
+	InsertRange(values []ValueIntervalTuple)
 }
