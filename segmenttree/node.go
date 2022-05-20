@@ -269,6 +269,24 @@ func (node *Node) split() {
 	}
 }
 
+func (node *Node) insertTuple(key uint32, value Addable) {
+	// This function should only be used when bulk inserting
+	// into a tree.
+	// Assumes that sorted continuous key/value pairs are inserted
+	// at the rightmost part of the tree.
+	if node.isLeaf {
+		node.keys = append(node.keys, key)
+		node.values = append(node.values, value)
+
+		if node.size()+1 > node.tree.branchingFactor {
+			node.split()
+		}
+	} else {
+		lastChild := node.children[len(node.children)-1]
+		lastChild.insertTuple(key, value)
+	}
+}
+
 func (node *Node) size() uint32 {
 	return uint32(len(node.keys))
 }
