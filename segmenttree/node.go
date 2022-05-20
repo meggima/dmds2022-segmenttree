@@ -3,6 +3,25 @@ package segmenttree
 import "math"
 
 type Node struct {
+	/*
+			Size of a node is
+			id: 4 byte (could be removed)
+			keys: 4+4+4+ byte (reference, length, cap)  + b-1 * 4 byte
+			values: assume float32 --> 12 byte + b * 4 byte
+			children: 12 byte + l * 4 byte
+			parent: 4 byte
+			tree: 4 byte
+			isLeaf: 1 byte
+
+		This gives a total of  4 + 3*12 +(2*b-1) *4 + l * 4 + 8 +1 = 49 + (2*b-1) *4 + l * 4
+
+		Go determines the memory allocation for our structs, it will pad bytes to make sure the final memory
+		footprint is a multiple of 8 bytes
+		let's assume the default page size of linux with 4 kb = 4096 bytes
+
+		For simplicity set b = l, then we get a maximal branching factor b and a maximal leaf capacity l
+		of b=l=337 to fit into one disk page of 4 kb (removing the id and the isLeaf flag would lead to 338).
+	*/
 	nodeId   uint32
 	keys     []uint32
 	values   []Addable
@@ -159,6 +178,87 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 		// All other cases are handled at tree level.
 		// Thus, we should not get here.
 		panic("should not get here")
+	}
+}
+
+func (node *Node) split() {
+	if node.size() < 2 {
+		// Let's add an invariant to get rid of ugly edge cases, which are irrelevant in practice!
+		panic("An Node of size < 2 can not be split.")
+	}
+	var parent *Node
+	n := node.size()
+	half_n := int32(math.Ceil(float64(n)/float64(2))) - 1
+
+	// N1 contains 1 ... n/2-1 instances and corresponding pointers if not a leaf child
+	n1 := &Node{
+		nodeId:   0, // TODO  This is basically useless, do we need it?
+		keys:     node.keys[:half_n],
+		values:   node.values[:half_n+1],
+		children: nil,
+		parent:   node.parent,
+		tree:     node.tree,
+		isLeaf:   node.isLeaf,
+	}
+
+	// N2 contains n/2 ... n-1 instances and corresponding pointers if not a leaf child
+	n2 := &Node{
+		nodeId:   0, // TODO  This is basically useless, do we need it?
+		keys:     node.keys[half_n+1:],
+		values:   node.values[half_n+1:],
+		children: nil,
+		parent:   node.parent,
+		tree:     node.tree,
+		isLeaf:   node.isLeaf,
+	}
+
+	if !node.isLeaf {
+		n1.children = node.children[:half_n+1]
+		n2.children = node.children[half_n+1:]
+	}
+
+	// Case 1: Node is root. Create new root with empty values and hook n1, n2.
+	if node.tree.root == node {
+		parent = &Node{
+			nodeId:   5, // This is basically useless
+			keys:     []uint32{node.keys[half_n]},
+			values:   []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement},
+			children: []*Node{n1, n2},
+			parent:   nil,
+			tree:     node.tree,
+			isLeaf:   false,
+		}
+		n1.parent = parent
+		n2.parent = parent
+		parent.tree.root = parent
+	} else {
+		// Case 2: Node has parent. Let's insert n1, n2 and shift the keys, values and children to the right.
+		parent = node.parent
+		parent.keys = append(parent.keys, parent.keys[len(parent.keys)-1])
+		parent.values = append(parent.values, parent.values[len(parent.values)-1])
+		parent.children = append(parent.children, parent.children[len(parent.children)-1])
+
+		for j, key := range parent.keys {
+			if key >= node.keys[node.size()-1] {
+				// change the following keys, values and children
+				for i, _ := range parent.keys[j+1:] {
+					parent.keys[len(parent.keys)-i-1] = parent.keys[len(parent.keys)-i-2]
+					parent.values[len(parent.values)-i-2] = parent.values[len(parent.values)-i-3]
+					parent.children[len(parent.children)-i-2] = parent.children[len(parent.children)-i-3]
+				}
+				// swap j to n1
+				parent.children[j] = n1
+				parent.keys[j] = node.keys[half_n]
+				// the value at pos j stays the same
+
+				// set n2, value of j+1 is already the value of j
+				parent.children[j+1] = n2
+				break
+			}
+		}
+	}
+	if parent.size() >= parent.tree.branchingFactor {
+		parent.split()
 	}
 }
 
