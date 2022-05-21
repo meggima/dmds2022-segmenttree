@@ -234,6 +234,32 @@ func TestInsert4(t *testing.T) {
 	assert.Equal(Float(0), n4.values[1])
 }
 
+func TestInsertTwiceSameRangeSimpleElement(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+
+	n0 := &Node{
+		nodeId:   0,
+		keys:     []uint32{},
+		values:   []Addable{Float(0)},
+		children: []*Node{},
+		isLeaf:   true,
+	}
+	n0.parent = nil
+	tree := &SegmentTreeImpl{
+		root:            n0,
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	n0.tree = tree
+
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
+	tree.Insert(ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 40}})
+
+	// Assert
+	assert.Equal(2, int(n0.size()))
+}
+
 // Yang et. al 2003, 3.4 & 3.6
 // Delete 1, [17, 47) & interval merge
 func TestDelete1(t *testing.T) {
