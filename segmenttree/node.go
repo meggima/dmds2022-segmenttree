@@ -270,3 +270,32 @@ func (node *Node) split() *Node {
 func (node *Node) size() uint32 {
 	return uint32(len(node.keys))
 }
+
+func (node *Node) imerge() {
+	/*
+		Merge two adjacent leaf intervals with equal aggregate values within one node.
+
+		Following the practical advice in the paper and due to the overhead of the lookup we
+			did not implement the case that two aggregate values of two neighbouring nodes could be combined.
+
+		This procedure holds only if we never have more than two equal values beside each other. In practice this might be violated.
+	*/
+	if !node.isLeaf {
+		return
+	}
+	for j, value := range node.values {
+		if int(node.size()+1) > j && value == node.values[j+1] {
+			node.keys = append(node.keys[:j], node.keys[j+1:]...)
+			node.values = append(node.values[:j], node.values[j+1:]...)
+			break
+		} else if int(node.size()+1) == j && value == node.values[j+1] {
+			node.keys = node.keys[:j]
+			node.values = node.values[:j]
+			break
+		}
+	}
+}
+
+func (node *Node) nmerge() {
+
+}
