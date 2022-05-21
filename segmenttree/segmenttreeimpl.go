@@ -57,6 +57,11 @@ func (tree *SegmentTreeImpl) Insert(value ValueIntervalTuple) {
 }
 
 func (tree *SegmentTreeImpl) Delete(value ValueIntervalTuple) {
+	valueToInsert := tree.aggregate.additionElement(value.value)
+
+	valueToInsert = valueToInsert.Inverse()
+
+	tree.insert(tree.root, ValueIntervalTuple{value: valueToInsert, interval: value.interval})
 
 }
 

@@ -41,6 +41,7 @@ type Comparable interface {
 
 type Addable interface {
 	Add(x Addable) Addable
+	Inverse() Addable
 }
 
 type AverageTuple struct {
@@ -54,11 +55,21 @@ func (x AverageTuple) Add(y AverageTuple) AverageTuple {
 		Count: x.Count + y.Count,
 	}
 }
+func (x AverageTuple) Inverse() AverageTuple {
+	return AverageTuple{
+		Sum:   -x.Sum,
+		Count: -1,
+	}
+}
 
 type Float float32
 
 func (x Float) Add(y Addable) Addable {
 	return x + y.(Float)
+}
+
+func (x Float) Inverse() Addable {
+	return -x
 }
 
 func (x Float) Compare(y Float) int {

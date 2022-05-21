@@ -337,6 +337,34 @@ func TestDelete2(t *testing.T) {
 	assert.Equal(Float(0), n4.values[1])
 }
 
+func TestDeleteSimpleElement(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+
+	n0 := &Node{
+		nodeId:   0,
+		keys:     []uint32{},
+		values:   []Addable{},
+		children: []*Node{},
+		isLeaf:   false,
+	}
+	n0.parent = nil
+	tree := &SegmentTreeImpl{
+		root:            n0,
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	n0.tree = tree
+
+	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
+	// Act
+	tree.Insert(ValueIntervalTuple{value: Float(-2), interval: Interval{start: 10, end: 40}})
+
+	// Assert
+
+	assert.Equal(uint32(0), n0.size())
+}
+
 // Yang et. al 2003, Fig 4
 func setupTree() *SegmentTreeImpl {
 	n1 := &Node{
