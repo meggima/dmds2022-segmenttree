@@ -343,10 +343,10 @@ func TestDeleteSimpleElement(t *testing.T) {
 
 	n0 := &Node{
 		nodeId:   0,
-		keys:     []uint32{},
-		values:   []Addable{},
+		keys:     []uint32{10, 40},
+		values:   []Addable{Float(0), Float(2), Float(0)},
 		children: []*Node{},
-		isLeaf:   false,
+		isLeaf:   true,
 	}
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
@@ -355,14 +355,11 @@ func TestDeleteSimpleElement(t *testing.T) {
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	n0.tree = tree
-
-	tree.Insert(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
 	// Act
-	tree.Insert(ValueIntervalTuple{value: Float(-2), interval: Interval{start: 10, end: 40}})
+	tree.Delete(ValueIntervalTuple{value: Float(2), interval: Interval{start: 10, end: 40}})
 
 	// Assert
-
-	assert.Equal(uint32(0), n0.size())
+	assert.Equal(0, int(n0.size()))
 }
 
 // Yang et. al 2003, Fig 4

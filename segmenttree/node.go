@@ -122,7 +122,7 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 			node.values[i] = node.values[i-2]
 		}
 
-		node.values[intervalIndex+2] = node.values[intervalIndex] // Original value
+		node.values[intervalIndex+2] = node.values[intervalIndex] // Original value // TODO breaks if empty node and len(values)<intervalIndex
 		node.values[intervalIndex+1] = node.tree.aggregate.operation(node.values[intervalIndex], tupleToInsert.value)
 
 		return 2 // one interval got split into three (= 2 new)

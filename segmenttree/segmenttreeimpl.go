@@ -111,7 +111,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 
 		if intersection == EmptyInterval {
 			// Do nothing
-		} else if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
+		} else if index < len(node.values) && node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
 			// Do nothing
 		} else if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
 			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
@@ -123,7 +123,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 				if node.size()+1 > tree.branchingFactor {
 					node = node.split()
 				}
-				//intervals = node.getIntervals() // recalculate as they might have changed // TODO is this needed?
+				intervals = node.getIntervals() // recalculate as they might have changed
 			}
 		}
 		if index+1 >= len(intervals) {
