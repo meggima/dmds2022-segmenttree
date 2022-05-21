@@ -118,7 +118,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 				if node.size()+1 > tree.branchingFactor {
 					node = node.split()
 				}
-				intervals = node.getIntervals() // recalculate as they might have changed
+				//intervals = node.getIntervals() // recalculate as they might have changed // TODO is this needed?
 			}
 		}
 		if index+1 >= len(intervals) {
