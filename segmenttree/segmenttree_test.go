@@ -545,9 +545,9 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 	n0 := &Node{
 		nodeId:   0,
 		keys:     []uint32{},
-		values:   []Addable{},
+		values:   []Addable{Float(0)},
 		children: []*Node{},
-		isLeaf:   false,
+		isLeaf:   true,
 	}
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
