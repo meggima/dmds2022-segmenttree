@@ -29,7 +29,6 @@ func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImp
 func (t *SegmentTreeImpl) newNode() *Node {
 	node := &Node{
 		nodeId:   t.nextNodeId,
-		n:        0,
 		keys:     make([]uint32, t.branchingFactor+1),  // + 1 to account for an interval being split into three intervals
 		values:   make([]Addable, t.branchingFactor+2), // + 2 to account for an interval being split into three intervals
 		children: make([]*Node, t.branchingFactor+2),   // + 2 to account for an interval being split into three intervals
@@ -97,25 +96,35 @@ func (tree *SegmentTreeImpl) rangeQuery(node *Node, interval Interval, value Add
 }
 
 func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple) {
-	for index, nodeInterval := range node.getIntervals() {
+	has_next_interval := true
+	index := 0
+	intervals := node.getIntervals()
+	for has_next_interval {
+		nodeInterval := intervals[index]
+
 		intersection := nodeInterval.IntersectionWith(tupleToInsert.interval)
 
 		if intersection == EmptyInterval {
-			continue
-		}
-
-		if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
-			continue
-		}
-
-		if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
+			// Do nothing
+		} else if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
+			// Do nothing
+		} else if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
 			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
 		} else {
 			if !node.isLeaf {
 				tree.insert(node.children[index], tupleToInsert)
 			} else {
-				node.insert(index, tupleToInsert)
+				index += node.insert(index, tupleToInsert)
+				if node.size()+1 > tree.branchingFactor {
+					node = node.split()
+				}
+				//intervals = node.getIntervals() // recalculate as they might have changed // TODO is this needed?
 			}
 		}
+		if index+1 >= len(intervals) {
+			has_next_interval = false
+		}
+		index++
 	}
+
 }

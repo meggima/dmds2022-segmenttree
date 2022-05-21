@@ -21,7 +21,6 @@ func TestFindIntervalIndex(t *testing.T) {
 	}
 
 	node := &Node{
-		n:    3,
 		keys: []uint32{10, 20, 30},
 	}
 
@@ -105,7 +104,6 @@ func TestGetIntervalEndWhenRoot(t *testing.T) {
 	}
 
 	node := &Node{
-		n:    3,
 		keys: []uint32{1, 15, 30},
 	}
 
@@ -155,7 +153,6 @@ func TestGetIntervalStartWhenRoot(t *testing.T) {
 	}
 
 	node := &Node{
-		n:    3,
 		keys: []uint32{1, 15, 30},
 	}
 
@@ -216,33 +213,906 @@ func TestGetIntervals(t *testing.T) {
 	}
 }
 
+func TestInsertEmptyNode(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{},
+		values: []Addable{Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 17, end: 47}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, intervalTuple.interval.start, node.keys[0])
+	assert.Equal(t, intervalTuple.interval.end, node.keys[1])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, intervalTuple.value, node.values[1])
+	assert.Equal(t, Float(0), node.values[2])
+
+}
+
+func TestInsertSelfContained1(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 1, end: 3}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(1), node.keys[0])
+	assert.Equal(t, uint32(3), node.keys[1])
+	assert.Equal(t, uint32(10), node.keys[2])
+	assert.Equal(t, uint32(20), node.keys[3])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(8), node.values[1])
+	assert.Equal(t, Float(1), node.values[2])
+	assert.Equal(t, Float(2), node.values[3])
+	assert.Equal(t, Float(3), node.values[4])
+}
+
+func TestInsertSelfContained2(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 11, end: 13}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(11), node.keys[1])
+	assert.Equal(t, uint32(13), node.keys[2])
+	assert.Equal(t, uint32(20), node.keys[3])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(9), node.values[2])
+	assert.Equal(t, Float(2), node.values[3])
+	assert.Equal(t, Float(3), node.values[4])
+}
+
+func TestInsertSelfContained3(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 21, end: 23}}
+
+	// Act
+	node.insert(2, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(20), node.keys[1])
+	assert.Equal(t, uint32(21), node.keys[2])
+	assert.Equal(t, uint32(23), node.keys[3])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(3), node.values[2])
+	assert.Equal(t, Float(10), node.values[3])
+	assert.Equal(t, Float(3), node.values[4])
+}
+
+func TestInsertNodeIntervalLeftLarger1(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 1, end: 100}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(1), node.keys[0])
+	assert.Equal(t, uint32(10), node.keys[1])
+	assert.Equal(t, uint32(20), node.keys[2])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(8), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestInsertNodeIntervalLeftLarger2(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 11, end: 100}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(11), node.keys[1])
+	assert.Equal(t, uint32(20), node.keys[2])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(9), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestInsertNodeIntervalLeftLarger3(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 21, end: 100}}
+
+	// Act
+	node.insert(2, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(20), node.keys[1])
+	assert.Equal(t, uint32(21), node.keys[2])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(3), node.values[2])
+	assert.Equal(t, Float(10), node.values[3])
+}
+
+func TestInsertNodeIntervalRightLarger1(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{4},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{nil, node},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 3, end: 6}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(6), node.keys[0])
+	assert.Equal(t, uint32(10), node.keys[1])
+	assert.Equal(t, uint32(20), node.keys[2])
+	assert.Equal(t, Float(8), node.values[0])
+	assert.Equal(t, Float(1), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestInsertNodeIntervalRightLarger2(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 0, end: 11}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(11), node.keys[1])
+	assert.Equal(t, uint32(20), node.keys[2])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(9), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestInsertNodeIntervalRightLarger3(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	node := &Node{
+		keys:   []uint32{10, 20},
+		values: []Addable{Float(1), Float(2), Float(3)},
+		tree:   tree,
+	}
+
+	parent := &Node{
+		keys:     []uint32{50},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{node, nil},
+		tree:     tree,
+	}
+
+	node.parent = parent
+	intervalTuple := ValueIntervalTuple{value: Addable(Float(7)), interval: Interval{start: 0, end: 21}}
+
+	// Act
+	node.insert(2, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(20), node.keys[1])
+	assert.Equal(t, uint32(21), node.keys[2])
+	assert.Equal(t, Float(1), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(10), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestInsertMatchingStartPoint1(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 0, end: 5}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(5), node.keys[0])
+	assert.Equal(t, uint32(10), node.keys[1])
+	assert.Equal(t, uint32(40), node.keys[2])
+	assert.Equal(t, Float(3), node.values[0])
+	assert.Equal(t, Float(0), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingStartPoint2IntervallIndex1(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(30), node.keys[1])
+	assert.Equal(t, uint32(40), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(5), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingStartPoint2IntervallIndex0(t *testing.T) {
+	// TODO to solve issue #5
+
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(30), node.keys[1])
+	assert.Equal(t, uint32(40), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(5), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingStartPoint3(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 40, end: 100}}
+
+	// Act
+	node.insert(2, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(40), node.keys[1])
+	assert.Equal(t, uint32(100), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(3), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingEndPoint1(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 3, end: 10}}
+
+	// Act
+	node.insert(0, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(3), node.keys[0])
+	assert.Equal(t, uint32(10), node.keys[1])
+	assert.Equal(t, uint32(40), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(3), node.values[1])
+	assert.Equal(t, Float(2), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingEndPoint2(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 30, end: 40}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(30), node.keys[1])
+	assert.Equal(t, uint32(40), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(5), node.values[2])
+	assert.Equal(t, Float(0), node.values[3])
+}
+
+func TestInsertMatchingEndPoint3(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 40},
+		values: []Addable{Float(0), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 50, end: math.MaxUint32}}
+
+	// Act
+	node.insert(2, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(40), node.keys[1])
+	assert.Equal(t, uint32(50), node.keys[2])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+	assert.Equal(t, Float(0), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+}
+
+func TestSplitRootNodeWithOddNumberOfKeys(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:   []uint32{10, 20, 30, 40, 50},
+		values: []Addable{Float(0), Float(1), Float(2), Float(3), Float(4), Float(0)},
+		parent: nil,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+
+	// Act
+	n0.split()
+
+	// Assert
+	n_root := SBTree.root
+	c0 := n_root.children[0]
+	c1 := n_root.children[1]
+	assert.Equal(t, 1, int(n_root.size()))
+	assert.Equal(t, 2, int(c0.size()))
+	assert.Equal(t, 2, int(c1.size()))
+
+	assert.Equal(t, uint32(30), n_root.keys[0])
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[0])
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[1])
+
+	assert.Equal(t, uint32(10), c0.keys[0])
+	assert.Equal(t, uint32(20), c0.keys[1])
+	assert.Equal(t, Float(0), c0.values[0])
+	assert.Equal(t, Float(1), c0.values[1])
+	assert.Equal(t, Float(2), c0.values[2])
+
+	assert.Equal(t, uint32(40), c1.keys[0])
+	assert.Equal(t, uint32(50), c1.keys[1])
+	assert.Equal(t, Float(3), c1.values[0])
+	assert.Equal(t, Float(4), c1.values[1])
+	assert.Equal(t, Float(0), c1.values[2])
+
+}
+
+// Fig. 19, Split Root
+func TestSplitRootNodeWithEvenNumberOfKeysBook(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:   []uint32{10, 20, 30, 40},
+		values: []Addable{Float(0), Float(5), Float(6), Float(3), Float(0)},
+		parent: nil,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+
+	// Act
+	n0.split()
+
+	// Assert
+	n_root := SBTree.root
+	c0 := n_root.children[0]
+	c1 := n_root.children[1]
+	assert.Equal(t, 1, int(n_root.size()))
+	assert.Equal(t, 2, int(c0.size()))
+	assert.Equal(t, 1, int(c1.size()))
+
+	assert.Equal(t, 30, int(n_root.keys[0]))
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[0])
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[1])
+
+	assert.Equal(t, uint32(10), c0.keys[0])
+	assert.Equal(t, uint32(20), c0.keys[1])
+	assert.Equal(t, Float(0), c0.values[0])
+	assert.Equal(t, Float(5), c0.values[1])
+	assert.Equal(t, Float(6), c0.values[2])
+
+	assert.Equal(t, uint32(40), c1.keys[0])
+	assert.Equal(t, Float(3), c1.values[0])
+	assert.Equal(t, Float(0), c1.values[1])
+}
+
+func TestSplitNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:     []uint32{20, 40},
+		values:   []Addable{Float(0), Float(1), Float(0)},
+		children: []*Node{nil, nil, nil},
+		parent:   nil,
+		isLeaf:   false,
+		tree:     SBTree,
+	}
+	n10 := &Node{
+		keys:   []uint32{5, 10},
+		values: []Addable{Float(0), Float(1), Float(2)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n11 := &Node{
+		keys:   []uint32{22, 25, 30, 35},
+		values: []Addable{Float(3), Float(4), Float(5), Float(6), Float(7)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n12 := &Node{
+		keys:   []uint32{45, 50},
+		values: []Addable{Float(8), Float(9), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+	n0.children[0] = n10
+	n0.children[1] = n11
+	n0.children[2] = n12
+
+	// Act (split node n11)
+	n11.split()
+
+	// Assert
+	n_root := SBTree.root
+	c10 := n_root.children[0]
+	c11 := n_root.children[1]
+	c12 := n_root.children[2]
+	c13 := n_root.children[3]
+
+	assert.Equal(t, uint32(20), n_root.keys[0])
+	assert.Equal(t, uint32(30), n_root.keys[1])
+	assert.Equal(t, uint32(40), n_root.keys[2])
+	assert.Equal(t, Float(0), n_root.values[0])
+	assert.Equal(t, Float(1), n_root.values[1])
+	assert.Equal(t, Float(1), n_root.values[2])
+	assert.Equal(t, Float(0), n_root.values[3])
+
+	assert.Equal(t, uint32(5), c10.keys[0])
+	assert.Equal(t, uint32(10), c10.keys[1])
+	assert.Equal(t, Float(0), c10.values[0])
+	assert.Equal(t, Float(1), c10.values[1])
+	assert.Equal(t, Float(2), c10.values[2])
+
+	assert.Equal(t, uint32(22), c11.keys[0])
+	assert.Equal(t, uint32(25), c11.keys[1])
+	assert.Equal(t, Float(3), c11.values[0])
+	assert.Equal(t, Float(4), c11.values[1])
+	assert.Equal(t, Float(5), c11.values[2])
+
+	assert.Equal(t, uint32(35), c12.keys[0])
+	assert.Equal(t, Float(6), c12.values[0])
+	assert.Equal(t, Float(7), c12.values[1])
+
+	assert.Equal(t, uint32(45), c13.keys[0])
+	assert.Equal(t, uint32(50), c13.keys[1])
+	assert.Equal(t, Float(8), c13.values[0])
+	assert.Equal(t, Float(9), c13.values[1])
+	assert.Equal(t, Float(0), c13.values[2])
+}
+
+// Fig 19 Split Leaf
+func TestSplitMostRightNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:     []uint32{15, 30},
+		values:   []Addable{Float(0), Float(1), Float(0)},
+		children: []*Node{nil, nil, nil},
+		parent:   nil,
+		isLeaf:   false,
+		tree:     SBTree,
+	}
+	n10 := &Node{
+		keys:   []uint32{5, 10},
+		values: []Addable{Float(0), Float(2), Float(8)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n11 := &Node{
+		keys:   []uint32{20},
+		values: []Addable{Float(5), Float(6)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n12 := &Node{
+		keys:   []uint32{35, 40, 45, 50},
+		values: []Addable{Float(4), Float(8), Float(5), Float(1), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+	n0.children[0] = n10
+	n0.children[1] = n11
+	n0.children[2] = n12
+
+	// Act (split node n11)
+	n12.split()
+
+	// Assert
+	n_root := SBTree.root
+	c10 := n_root.children[0]
+	c11 := n_root.children[1]
+	c12 := n_root.children[2]
+	c13 := n_root.children[3]
+
+	assert.Equal(t, 15, int(n_root.keys[0]))
+	assert.Equal(t, 30, int(n_root.keys[1]))
+	assert.Equal(t, 45, int(n_root.keys[2]))
+	assert.Equal(t, Float(0), n_root.values[0])
+	assert.Equal(t, Float(1), n_root.values[1])
+	assert.Equal(t, Float(0), n_root.values[2])
+	assert.Equal(t, Float(0), n_root.values[3])
+
+	assert.Equal(t, uint32(5), c10.keys[0])
+	assert.Equal(t, uint32(10), c10.keys[1])
+	assert.Equal(t, Float(0), c10.values[0])
+	assert.Equal(t, Float(2), c10.values[1])
+	assert.Equal(t, Float(8), c10.values[2])
+
+	assert.Equal(t, uint32(20), c11.keys[0])
+	assert.Equal(t, Float(5), c11.values[0])
+	assert.Equal(t, Float(6), c11.values[1])
+
+	assert.Equal(t, uint32(35), c12.keys[0])
+	assert.Equal(t, uint32(40), c12.keys[1])
+	assert.Equal(t, Float(4), c12.values[0])
+	assert.Equal(t, Float(8), c12.values[1])
+	assert.Equal(t, Float(5), c12.values[2])
+
+	assert.Equal(t, uint32(50), c13.keys[0])
+	assert.Equal(t, Float(1), c13.values[0])
+	assert.Equal(t, Float(0), c13.values[1])
+}
+
+func TestSplitNonRootNodeIsLeafAndSplitsParentWhichIsNoLeaf(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:     []uint32{20, 40, 60},
+		values:   []Addable{Float(0), Float(1), Float(2), Float(0)},
+		children: []*Node{nil, nil, nil, nil},
+		parent:   nil,
+		isLeaf:   false,
+		tree:     SBTree,
+	}
+	n10 := &Node{
+		keys:   []uint32{5, 10},
+		values: []Addable{Float(0), Float(1), Float(2)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n11 := &Node{
+		keys:   []uint32{22, 25, 30, 35},
+		values: []Addable{Float(3), Float(4), Float(5), Float(6), Float(7)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n12 := &Node{
+		keys:   []uint32{45, 50},
+		values: []Addable{Float(8), Float(9), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n13 := &Node{
+		keys:   []uint32{65},
+		values: []Addable{Float(8), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+	n0.children[0] = n10
+	n0.children[1] = n11
+	n0.children[2] = n12
+	n0.children[3] = n13
+
+	// Act (split node n11)
+	n11.split()
+
+	// Assert
+	n_root := SBTree.root
+	c10 := n_root.children[0]
+	c11 := n_root.children[1]
+
+	c20 := c10.children[0]
+	c21 := c10.children[1]
+	c22 := c10.children[2]
+
+	c23 := c11.children[0]
+	c24 := c11.children[1]
+
+	assert.Equal(t, uint32(40), n_root.keys[0])
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[0])
+	assert.Equal(t, SBTree.aggregate.neutralElement, n_root.values[1])
+
+	assert.Equal(t, uint32(20), c10.keys[0])
+	assert.Equal(t, uint32(30), c10.keys[1])
+	assert.Equal(t, Float(0), c10.values[0])
+	assert.Equal(t, Float(1), c10.values[1])
+	assert.Equal(t, Float(1), c10.values[1])
+
+	assert.Equal(t, uint32(60), c11.keys[0])
+	assert.Equal(t, Float(2), c11.values[0])
+	assert.Equal(t, Float(0), c11.values[1])
+
+	assert.Equal(t, uint32(5), c20.keys[0])
+	assert.Equal(t, uint32(10), c20.keys[1])
+	assert.Equal(t, Float(0), c20.values[0])
+	assert.Equal(t, Float(1), c20.values[1])
+	assert.Equal(t, Float(2), c20.values[2])
+
+	assert.Equal(t, uint32(22), c21.keys[0])
+	assert.Equal(t, uint32(25), c21.keys[1])
+	assert.Equal(t, Float(3), c21.values[0])
+	assert.Equal(t, Float(4), c21.values[1])
+	assert.Equal(t, Float(5), c21.values[2])
+
+	assert.Equal(t, uint32(35), c22.keys[0])
+	assert.Equal(t, Float(6), c22.values[0])
+	assert.Equal(t, Float(7), c22.values[1])
+
+	assert.Equal(t, uint32(45), c23.keys[0])
+	assert.Equal(t, uint32(50), c23.keys[1])
+	assert.Equal(t, Float(8), c23.values[0])
+	assert.Equal(t, Float(9), c23.values[1])
+	assert.Equal(t, Float(0), c23.values[2])
+
+	assert.Equal(t, uint32(65), c24.keys[0])
+	assert.Equal(t, Float(8), c24.values[0])
+	assert.Equal(t, Float(0), c24.values[1])
+}
+
 func SetupNodes() (*Node, *Node, *Node, *Node, *Node) {
 	n0 := &Node{
-		n:        3,
 		keys:     []uint32{15, 30, 45},
 		children: make([]*Node, 5),
 	}
 
 	n1 := &Node{
-		n:      2,
 		keys:   []uint32{5, 10},
 		parent: n0,
 	}
 
 	n2 := &Node{
-		n:      1,
 		keys:   []uint32{20},
 		parent: n0,
 	}
 
 	n3 := &Node{
-		n:      2,
 		keys:   []uint32{35, 40},
 		parent: n0,
 	}
 
 	n4 := &Node{
-		n:      1,
 		keys:   []uint32{50},
 		parent: n0,
 	}

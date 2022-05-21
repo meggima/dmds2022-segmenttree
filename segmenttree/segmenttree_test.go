@@ -84,18 +84,29 @@ func TestInsert1(t *testing.T) {
 	// Assert
 	n0 := tree.root
 	n2 := n0.children[1]
+	n3 := n0.children[2]
 	n4 := n0.children[3]
 
+	assert.Equal(Float(0), n0.values[0])
+	assert.Equal(Float(1), n0.values[1])
 	assert.Equal(Float(1), n0.values[2])
+	assert.Equal(Float(0), n0.values[3])
 
-	assert.Equal(uint32(2), n2.n)
+	assert.Equal(uint32(2), n2.size())
 	assert.Equal(uint32(17), n2.keys[0])
 	assert.Equal(uint32(20), n2.keys[1])
 	assert.Equal(Float(5), n2.values[0])
 	assert.Equal(Float(6), n2.values[1])
 	assert.Equal(Float(7), n2.values[2])
 
-	assert.Equal(uint32(2), n4.n)
+	assert.Equal(uint32(2), n3.size())
+	assert.Equal(uint32(35), n3.keys[0])
+	assert.Equal(uint32(40), n3.keys[1])
+	assert.Equal(Float(4), n3.values[0])
+	assert.Equal(Float(8), n3.values[1])
+	assert.Equal(Float(5), n3.values[2])
+
+	assert.Equal(uint32(2), n4.size())
 	assert.Equal(uint32(47), n4.keys[0])
 	assert.Equal(uint32(50), n4.keys[1])
 	assert.Equal(Float(2), n4.values[0])
@@ -118,7 +129,7 @@ func TestInsert2(t *testing.T) {
 	n0 := tree.root
 	n2 := n0.children[1]
 
-	assert.Equal(uint32(2), n2.n)
+	assert.Equal(uint32(2), n2.size())
 
 	assert.Equal(uint32(20), n2.keys[0])
 	assert.Equal(uint32(24), n2.keys[1])
@@ -143,7 +154,7 @@ func TestInsert3(t *testing.T) {
 	n0 := tree.root
 	n2 := n0.children[1]
 
-	assert.Equal(uint32(3), n2.n)
+	assert.Equal(uint32(3), n2.size())
 
 	assert.Equal(uint32(20), n2.keys[0])
 	assert.Equal(uint32(24), n2.keys[1])
@@ -176,55 +187,55 @@ func TestInsert4(t *testing.T) {
 	n3 := n02.children[0]
 	n4 := n02.children[1]
 
-	assert.Equal(uint32(1), n0.n)
+	assert.Equal(uint32(1), n0.size())
 	assert.Equal(uint32(30), n0.keys[0])
 	assert.Equal(Float(0), n0.values[0])
 	assert.Equal(Float(0), n0.values[1])
 
-	assert.Equal(uint32(2), n01.n)
+	assert.Equal(uint32(2), n01.size())
 	assert.Equal(uint32(10), n01.keys[0])
 	assert.Equal(uint32(15), n01.keys[1])
 	assert.Equal(Float(0), n01.values[0])
 	assert.Equal(Float(0), n01.values[1])
 	assert.Equal(Float(1), n01.values[2])
 
-	assert.Equal(uint32(1), n02.n)
+	assert.Equal(uint32(1), n02.size())
 	assert.Equal(uint32(45), n02.keys[0])
 	assert.Equal(Float(0), n02.values[0])
 	assert.Equal(Float(0), n02.values[1])
 
-	assert.Equal(uint32(2), n11.n)
+	assert.Equal(uint32(2), n11.size())
 	assert.Equal(uint32(5), n11.keys[0])
 	assert.Equal(uint32(7), n11.keys[1])
 	assert.Equal(Float(0), n11.values[0])
 	assert.Equal(Float(2), n11.values[1])
 	assert.Equal(Float(3), n11.values[2])
 
-	assert.Equal(uint32(1), n12.n)
+	assert.Equal(uint32(1), n12.size())
 	assert.Equal(uint32(12), n12.keys[0])
 	assert.Equal(Float(9), n12.values[0])
 	assert.Equal(Float(8), n12.values[1])
 
-	assert.Equal(uint32(1), n2.n)
+	assert.Equal(uint32(1), n2.size())
 	assert.Equal(uint32(20), n2.keys[0])
 	assert.Equal(Float(5), n2.values[0])
 	assert.Equal(Float(6), n2.values[1])
 
-	assert.Equal(uint32(2), n3.n)
+	assert.Equal(uint32(2), n3.size())
 	assert.Equal(uint32(35), n3.keys[0])
 	assert.Equal(uint32(40), n3.keys[1])
 	assert.Equal(Float(4), n3.values[0])
 	assert.Equal(Float(8), n3.values[1])
 	assert.Equal(Float(5), n3.values[2])
 
-	assert.Equal(uint32(1), n4.n)
+	assert.Equal(uint32(1), n4.size())
 	assert.Equal(uint32(50), n4.keys[0])
 	assert.Equal(Float(1), n4.values[0])
 	assert.Equal(Float(0), n4.values[1])
 }
 
 // Yang et. al 2003, 3.4 & 3.6
-// Delete 1, [17, 47) & imerge
+// Delete 1, [17, 47) & interval merge
 func TestDelete1(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
@@ -242,26 +253,26 @@ func TestDelete1(t *testing.T) {
 	n3 := n0.children[2]
 	n4 := n0.children[3]
 
-	assert.Equal(uint32(2), n1.n)
+	assert.Equal(uint32(2), n1.size())
 	assert.Equal(uint32(5), n1.keys[0])
 	assert.Equal(uint32(10), n1.keys[1])
 	assert.Equal(Float(0), n1.values[0])
 	assert.Equal(Float(2), n1.values[1])
 	assert.Equal(Float(8), n1.values[2])
 
-	assert.Equal(uint32(1), n2.n)
+	assert.Equal(uint32(1), n2.size())
 	assert.Equal(uint32(20), n2.keys[0])
 	assert.Equal(Float(5), n2.values[0])
 	assert.Equal(Float(6), n2.values[1])
 
-	assert.Equal(uint32(2), n3.n)
+	assert.Equal(uint32(2), n3.size())
 	assert.Equal(uint32(35), n3.keys[0])
 	assert.Equal(uint32(40), n3.keys[1])
 	assert.Equal(Float(4), n3.values[0])
 	assert.Equal(Float(8), n3.values[1])
 	assert.Equal(Float(5), n3.values[2])
 
-	assert.Equal(uint32(1), n4.n)
+	assert.Equal(uint32(1), n4.size())
 	assert.Equal(uint32(50), n4.keys[0])
 	assert.Equal(Float(1), n4.values[0])
 	assert.Equal(Float(0), n4.values[1])
@@ -286,41 +297,41 @@ func TestDelete2(t *testing.T) {
 	n3 := n02.children[0]
 	n4 := n02.children[1]
 
-	assert.Equal(uint32(1), n0.n)
+	assert.Equal(uint32(1), n0.size())
 	assert.Equal(uint32(30), n0.keys[0])
 	assert.Equal(Float(0), n0.values[0])
 	assert.Equal(Float(0), n0.values[1])
 
-	assert.Equal(uint32(1), n01.n)
+	assert.Equal(uint32(1), n01.size())
 	assert.Equal(uint32(10), n01.keys[0])
 	assert.Equal(Float(0), n01.values[0])
 	assert.Equal(Float(0), n01.values[1])
 
-	assert.Equal(uint32(1), n02.n)
+	assert.Equal(uint32(1), n02.size())
 	assert.Equal(uint32(45), n02.keys[0])
 	assert.Equal(Float(0), n02.values[0])
 	assert.Equal(Float(0), n02.values[1])
 
-	assert.Equal(uint32(1), n11.n)
+	assert.Equal(uint32(1), n11.size())
 	assert.Equal(uint32(5), n11.keys[0])
 	assert.Equal(Float(0), n11.values[0])
 	assert.Equal(Float(2), n11.values[1])
 
-	assert.Equal(uint32(2), n2.n)
+	assert.Equal(uint32(2), n2.size())
 	assert.Equal(uint32(15), n2.keys[0])
 	assert.Equal(uint32(20), n2.keys[1])
 	assert.Equal(Float(8), n2.values[0])
 	assert.Equal(Float(6), n2.values[1])
 	assert.Equal(Float(7), n2.values[2])
 
-	assert.Equal(uint32(2), n3.n)
+	assert.Equal(uint32(2), n3.size())
 	assert.Equal(uint32(35), n3.keys[0])
 	assert.Equal(uint32(40), n3.keys[1])
 	assert.Equal(Float(4), n3.values[0])
 	assert.Equal(Float(8), n3.values[1])
 	assert.Equal(Float(5), n3.values[2])
 
-	assert.Equal(uint32(1), n4.n)
+	assert.Equal(uint32(1), n4.size())
 	assert.Equal(uint32(50), n4.keys[0])
 	assert.Equal(Float(1), n4.values[0])
 	assert.Equal(Float(0), n4.values[1])
@@ -330,43 +341,38 @@ func TestDelete2(t *testing.T) {
 func setupTree() *SegmentTreeImpl {
 	n1 := &Node{
 		nodeId:   1,
-		n:        2,
-		keys:     []uint32{5, 10, 0},
-		values:   []Addable{Float(0), Float(2), Float(8), Float(-1)},
-		children: []*Node{nil, nil, nil, nil},
+		keys:     []uint32{5, 10},
+		values:   []Addable{Float(0), Float(2), Float(8)},
+		children: []*Node{},
 		isLeaf:   true,
 	}
 
 	n2 := &Node{
 		nodeId:   2,
-		n:        1,
-		keys:     []uint32{20, 0, 0},
-		values:   []Addable{Float(5), Float(6), Float(-1), Float(-1)},
-		children: []*Node{nil, nil, nil, nil},
+		keys:     []uint32{20},
+		values:   []Addable{Float(5), Float(6)},
+		children: []*Node{},
 		isLeaf:   true,
 	}
 
 	n3 := &Node{
 		nodeId:   3,
-		n:        2,
-		keys:     []uint32{35, 40, 0},
-		values:   []Addable{Float(4), Float(8), Float(5), Float(-1)},
-		children: []*Node{nil, nil, nil, nil},
+		keys:     []uint32{35, 40},
+		values:   []Addable{Float(4), Float(8), Float(5)},
+		children: []*Node{},
 		isLeaf:   true,
 	}
 
 	n4 := &Node{
 		nodeId:   4,
-		n:        1,
-		keys:     []uint32{50, 0, 0},
-		values:   []Addable{Float(1), Float(0), Float(-1), Float(-1)},
-		children: []*Node{nil, nil, nil, nil},
+		keys:     []uint32{50},
+		values:   []Addable{Float(1), Float(0)},
+		children: []*Node{},
 		isLeaf:   true,
 	}
 
 	n0 := &Node{
 		nodeId:   0,
-		n:        3,
 		keys:     []uint32{15, 30, 45},
 		values:   []Addable{Float(0), Float(1), Float(0), Float(0)},
 		children: []*Node{n1, n2, n3, n4},
@@ -402,18 +408,17 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 
 	n0 := &Node{
 		nodeId:   0,
-		n:        3,
 		keys:     []uint32{},
-		values:   []Float{Float(0)},
+		values:   []Addable{Float(0)},
 		children: []*Node{},
-		isLeaf:   false,
+		isLeaf:   true,
 	}
 
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		operation:       Sum,
-		branchingFactor: BRANCHING_FACTOR,
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
 	}
 
 	n0.tree = tree
@@ -488,16 +493,15 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 
 	n0 := &Node{
 		nodeId:   0,
-		n:        3,
 		keys:     []uint32{},
-		values:   []Float{},
+		values:   []Addable{},
 		children: []*Node{},
 		isLeaf:   false,
 	}
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
-		operation:       Sum,
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
 		branchingFactor: BRANCHING_FACTOR,
 	}
 	n0.tree = tree
