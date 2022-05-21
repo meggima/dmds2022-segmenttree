@@ -411,14 +411,14 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 		keys:     []uint32{},
 		values:   []Addable{Float(0)},
 		children: []*Node{},
-		isLeaf:   false,
+		isLeaf:   true,
 	}
 
 	n0.parent = nil
 	tree := &SegmentTreeImpl{
 		root:            n0,
 		aggregate:       Aggregate{Sum, Identity, Float(0)},
-		branchingFactor: BRANCHING_FACTOR,
+		branchingFactor: 4,
 	}
 
 	n0.tree = tree

@@ -115,7 +115,9 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 				tree.insert(node.children[index], tupleToInsert)
 			} else {
 				index += node.insert(index, tupleToInsert)
-				// TODO add spliting if node overflows and continue
+				if node.size()+1 > tree.branchingFactor {
+					node = node.split()
+				}
 				intervals = node.getIntervals() // recalculate as they might have changed
 			}
 		}

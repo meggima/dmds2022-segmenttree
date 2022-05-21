@@ -181,20 +181,24 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 	}
 }
 
-func (node *Node) split() {
-	if node.size() < 2 {
+func (node *Node) split() *Node {
+	if node.size() < 1 {
 		// Let's add an invariant to get rid of ugly edge cases, which are irrelevant in practice!
-		panic("An Node of size < 2 can not be split.")
+		panic("A Node of size < 2 can not be split.")
+	}
+	if node.size()+1 <= node.tree.branchingFactor || node.size()+1 > node.tree.branchingFactor+2 {
+		// Let's add an invariant to get rid of ugly edge cases, which are irrelevant in practice!
+		panic("A Node to split has to have a size + 1  of l + 1 or l+2 in case it is a leaf and b+1 in case it is not a leaf, where l = b = branchingFactor.")
 	}
 	var parent *Node
-	n := node.size()
-	half_n := int32(math.Ceil(float64(n)/float64(2))) - 1
+	n := node.size() + 1
+	half_n := int32(math.Ceil(float64(n) / float64(2)))
 
 	// N1 contains 1 ... n/2-1 instances and corresponding pointers if not a leaf child
 	n1 := &Node{
 		nodeId:   0, // TODO  This is basically useless, do we need it?
-		keys:     node.keys[:half_n],
-		values:   node.values[:half_n+1],
+		keys:     node.keys[:half_n-1],
+		values:   node.values[:half_n],
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
@@ -204,8 +208,8 @@ func (node *Node) split() {
 	// N2 contains n/2 ... n-1 instances and corresponding pointers if not a leaf child
 	n2 := &Node{
 		nodeId:   0, // TODO  This is basically useless, do we need it?
-		keys:     node.keys[half_n+1:],
-		values:   node.values[half_n+1:],
+		keys:     node.keys[half_n:],
+		values:   node.values[half_n:],
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
@@ -213,15 +217,15 @@ func (node *Node) split() {
 	}
 
 	if !node.isLeaf {
-		n1.children = node.children[:half_n+1]
-		n2.children = node.children[half_n+1:]
+		n1.children = node.children[:half_n]
+		n2.children = node.children[half_n:]
 	}
 
 	// Case 1: Node is root. Create new root with empty values and hook n1, n2.
 	if node.tree.root == node {
 		parent = &Node{
 			nodeId:   5, // This is basically useless
-			keys:     []uint32{node.keys[half_n]},
+			keys:     []uint32{node.keys[half_n-1]},
 			values:   []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement},
 			children: []*Node{n1, n2},
 			parent:   nil,
@@ -239,7 +243,7 @@ func (node *Node) split() {
 		parent.children = append(parent.children, parent.children[len(parent.children)-1])
 
 		for j, key := range parent.keys {
-			if key >= node.keys[node.size()-1] {
+			if key >= node.keys[half_n-1] || j == int(parent.size()-1) {
 				// change the following keys, values and children
 				for i, _ := range parent.keys[j+1:] {
 					parent.keys[len(parent.keys)-i-1] = parent.keys[len(parent.keys)-i-2]
@@ -248,7 +252,7 @@ func (node *Node) split() {
 				}
 				// swap j to n1
 				parent.children[j] = n1
-				parent.keys[j] = node.keys[half_n]
+				parent.keys[j] = node.keys[half_n-1]
 				// the value at pos j stays the same
 
 				// set n2, value of j+1 is already the value of j
@@ -257,9 +261,10 @@ func (node *Node) split() {
 			}
 		}
 	}
-	if parent.size() >= parent.tree.branchingFactor {
+	if parent.size()+1 > parent.tree.branchingFactor {
 		parent.split()
 	}
+	return n1
 }
 
 func (node *Node) size() uint32 {
