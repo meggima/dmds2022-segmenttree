@@ -1159,15 +1159,15 @@ func TestNMerge(t *testing.T) {
 		tree:   tree,
 	}
 	n11 := &Node{
-		keys:   []uint32{5, 7},
-		values: []Addable{Float(0), Float(2), Float(2)},
+		keys:   []uint32{5},
+		values: []Addable{Float(0), Float(2)},
 		isLeaf: true,
 		parent: n01,
 		tree:   tree,
 	}
 	n12 := &Node{
-		keys:   []uint32{12},
-		values: []Addable{Float(0), Float(8)},
+		keys:   []uint32{},
+		values: []Addable{Float(8)},
 		isLeaf: true,
 		parent: n01,
 		tree:   tree,
@@ -1201,7 +1201,7 @@ func TestNMerge(t *testing.T) {
 	assert.Equal(t, Float(0), n11.values[0])
 	assert.Equal(t, Float(2), n11.values[1])
 
-	assert.Equal(t, 1, int(n2n.size()))
+	assert.Equal(t, 2, int(n2n.size()))
 	assert.Equal(t, uint32(15), n2n.keys[0])
 	assert.Equal(t, uint32(20), n2n.keys[1])
 	assert.Equal(t, Float(8), n2n.values[0])

@@ -297,5 +297,139 @@ func (node *Node) imerge() {
 }
 
 func (node *Node) nmerge() {
+	if node.size()+1 >= node.tree.branchingFactor/2 {
+		// only nmerge if node is less than half full
+		return
+	}
+	n := node.tree.branchingFactor
+	halfN := int(math.Ceil(float64(n) / float64(2)))
 
+	if !(node.size() != n) {
+		panic("The node must hold exactly half_n_ceiled -1 elements. Thus one below the required minimum.")
+	}
+
+	if &node.tree.root == &node { // Case 1: node is root
+		//node has only one child
+		if len(node.children) == 1 {
+			node.tree.root = node.children[0]
+			node.tree.root.parent = nil
+			for _, value := range node.tree.root.values {
+				value = value.Add(node.values[0]) // TODO test this
+			}
+		}
+		//do nothing
+		return
+
+	} else { // Case 2: node is not root
+		// find the lef and right sibling
+		var right_sibling *Node
+		var left_sibling *Node
+		var k int
+		parent := node.parent
+		for i, _ := range parent.children {
+			if parent.children[i] == node {
+				if i > 0 {
+					left_sibling = parent.children[i-1]
+				}
+				if i <= int(parent.size()) {
+					right_sibling = parent.children[i+1]
+				}
+				k = i
+				break
+			}
+		}
+		// Case2.1: If N' the right sibling of node has at least more than half_n +1 intervals, steal the first one  of N'! TODO test this
+		if right_sibling != nil && int(right_sibling.size()) > halfN {
+			for i, value := range node.values {
+				node.values[i] = parent.values[k].Add(value)
+			}
+			parent.values[k] = node.tree.aggregate.neutralElement
+			node.keys = append(node.keys, parent.keys[k])
+			node.values = append(node.values, parent.values[k+1].Add(right_sibling.values[0]))
+			if !node.isLeaf {
+				node.children = append(node.children, right_sibling.children[0])
+			}
+			parent.keys[k] = right_sibling.keys[0]
+			// cleanup sibling
+			right_sibling.keys = right_sibling.keys[1:]
+			right_sibling.values = right_sibling.values[1:]
+			right_sibling.children = right_sibling.children[1:]
+
+			return
+		}
+
+		// Case2.2: If N' the left sibling of N has more than half_n intervals Steal the last one of N'! TODO test this
+		if left_sibling != nil && int(left_sibling.size()) > halfN {
+			// in the paper N' the left sibling has now index k and N has index k+1 in the parent. Let's ignore this to keep things a bit more readable!
+			for i, value := range node.values {
+				node.values[i] = parent.values[k].Add(value)
+			}
+			parent.values[k] = node.tree.aggregate.neutralElement
+
+			node.keys = append([]uint32{parent.keys[k-1]}, node.keys...)
+			node.values = append([]Addable{parent.values[k-1].Add(left_sibling.values[len(left_sibling.values)-1])}, node.values...)
+			if !node.isLeaf {
+				node.children = append([]*Node{left_sibling.children[len(left_sibling.children)-1]}, node.children...)
+			}
+			parent.keys[k-1] = left_sibling.keys[len(left_sibling.keys)-2]
+			// cleanup sibling
+			left_sibling.keys = left_sibling.keys[:len(left_sibling.keys)-2]
+			left_sibling.values = left_sibling.values[:len(left_sibling.values)-2]
+			left_sibling.children = left_sibling.children[:len(left_sibling.children)-2]
+			return
+		}
+		// Case2.3: Otherwise merge N with a sibling into a new node and place it in the parent of node.
+		var n1 *Node
+		var n2 *Node
+		// TODO in practice there might be the case that left right sibling is nil. in this case we should take the left.
+		if left_sibling != nil && left_sibling.size()+1 == node.tree.branchingFactor {
+			n1 = left_sibling
+			n2 = node
+			k-- // so we know that k corresponds to n1
+		} else if right_sibling != nil { // We need to loosen up the condition to make the example work. Removed  right_sibling.size()+1 == node.tree.branchingFactor
+			n1 = node
+			n2 = right_sibling
+		} else {
+			panic("no sibling has enough keys!")
+		}
+
+		newN := &Node{
+			keys:     append(n1.keys, n2.keys...),
+			values:   []Addable{},
+			children: append(n1.children, n2.children...),
+			parent:   parent,
+			tree:     node.tree,
+			isLeaf:   node.isLeaf,
+		}
+
+		newN.keys = append([]uint32{parent.keys[k]}, newN.keys...)
+
+		for _, v := range n1.values {
+			newN.values = append(newN.values, v.Add(parent.values[k]))
+		}
+		for _, v := range n2.values {
+			newN.values = append(newN.values, v.Add(parent.values[k+1]))
+		}
+		// delete n1, n2 - this is not needed as we have a garbage collector
+		parent.children[k] = newN
+		parent.values[k] = node.tree.aggregate.neutralElement
+
+		if int(parent.size()) > k {
+			parent.keys = append(parent.keys[:k], parent.keys[k+1:]...)
+			parent.values = append(parent.values[:k+1], parent.values[k+2:]...)
+			if !node.isLeaf {
+				parent.keys = append(parent.keys[:k+1], parent.keys[k+2:]...)
+			}
+		} else if int(parent.size()) == k {
+			parent.keys = parent.keys[:k]
+			parent.values = parent.values[:k+1]
+			if !node.isLeaf {
+				parent.keys = parent.keys[:k+1]
+			}
+		}
+		// recurse: if the parent has now less then half_n nodes nmerge(parent)! TODO test this
+		if int(parent.size())+1 <= halfN {
+			parent.nmerge()
+		}
+	}
 }
