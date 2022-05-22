@@ -245,7 +245,7 @@ func (node *Node) split() *Node {
 		for j, key := range parent.keys {
 			if key >= node.keys[half_n-1] || j == int(parent.size()-1) {
 				// change the following keys, values and children
-				for i, _ := range parent.keys[j+1:] {
+				for i := range parent.keys[j+1:] {
 					parent.keys[len(parent.keys)-i-1] = parent.keys[len(parent.keys)-i-2]
 					parent.values[len(parent.values)-i-2] = parent.values[len(parent.values)-i-3]
 					parent.children[len(parent.children)-i-2] = parent.children[len(parent.children)-i-3]
