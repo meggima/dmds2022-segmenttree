@@ -735,6 +735,33 @@ func TestInsertMatchingEndPoint3(t *testing.T) {
 	assert.Equal(t, Float(3), node.values[3])
 }
 
+func TestInsertMatchingEndPoint4(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 30, 40},
+		values: []Addable{Float(0), Float(5), Float(2), Float(0)},
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	intervalTuple := ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}}
+
+	// Act
+	node.insert(1, intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(20), node.keys[1])
+	assert.Equal(t, uint32(30), node.keys[2])
+	assert.Equal(t, uint32(40), node.keys[3])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(5), node.values[1])
+	assert.Equal(t, Float(6), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+	assert.Equal(t, Float(0), node.values[4])
+}
+
 func TestSplitRootNodeWithOddNumberOfKeys(t *testing.T) {
 	// Arrange
 	SBTree := &SegmentTreeImpl{
