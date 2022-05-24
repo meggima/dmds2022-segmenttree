@@ -224,13 +224,15 @@ func (node *Node) split() {
 	// Case 1: Node is root. Create new root with empty values and hook n1, n2.
 	if node.tree.root == node {
 		parent = &Node{
-			keys:     []uint32{node.keys[half_n-1]}, // TODO copy correctly
-			values:   []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement},
+			keys:     make([]uint32, 1),
+			values:   make([]Addable, 2),
 			children: []*Node{n1, n2},
 			parent:   nil,
 			tree:     node.tree,
 			isLeaf:   false,
 		}
+		copy(parent.keys, []uint32{node.keys[half_n-1]})
+		copy(parent.values, []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement})
 		n1.parent = parent
 		n2.parent = parent
 		parent.tree.root = parent
