@@ -260,6 +260,35 @@ func TestInsertTwiceSameRangeSimpleElement(t *testing.T) {
 	assert.Equal(2, int(n0.size()))
 }
 
+func TestInsertMatchingEndPoint4(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{10, 30, 40},
+		values: []Addable{Float(0), Float(5), Float(2), Float(0)},
+		isLeaf: true,
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+	node.tree.root = node
+	intervalTuple := ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}}
+
+	// Act
+	node.tree.Insert(intervalTuple)
+
+	// Assert
+	assert.Equal(t, uint32(10), node.keys[0])
+	assert.Equal(t, uint32(20), node.keys[1])
+	assert.Equal(t, uint32(30), node.keys[2])
+	assert.Equal(t, uint32(40), node.keys[3])
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(5), node.values[1])
+	assert.Equal(t, Float(6), node.values[2])
+	assert.Equal(t, Float(3), node.values[3])
+	assert.Equal(t, Float(0), node.values[4])
+}
+
 // Yang et. al 2003, 3.4 & 3.6
 // Delete 1, [17, 47) & interval merge
 func TestDelete1(t *testing.T) {
