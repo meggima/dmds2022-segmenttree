@@ -126,5 +126,10 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 	if node.size()+1 > tree.branchingFactor {
 		node.split()
 	}
+	nodeSize := int(node.size())
+	for i := 0; i < nodeSize; i++ {
+		node.imerge()
+	}
 
+	node.nmerge()
 }

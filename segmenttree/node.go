@@ -286,7 +286,7 @@ func (node *Node) imerge() {
 		return
 	}
 	for j, value := range node.values {
-		if int(node.size()+1) > j && value == node.values[j+1] {
+		if int(node.size()) > j && value == node.values[j+1] {
 			node.keys = append(node.keys[:j], node.keys[j+1:]...)
 			node.values = append(node.values[:j], node.values[j+1:]...)
 			break
@@ -310,7 +310,7 @@ func (node *Node) nmerge() {
 		panic("The node must hold exactly half_n_ceiled -1 elements. Thus one below the required minimum.")
 	}
 
-	if &node.tree.root == &node { // Case 1: node is root
+	if node.tree.root == node { // Case 1: node is root
 		//node has only one child
 		if len(node.children) == 1 {
 			node.tree.root = node.children[0]
@@ -333,7 +333,7 @@ func (node *Node) nmerge() {
 				if i > 0 {
 					left_sibling = parent.children[i-1]
 				}
-				if i <= int(parent.size()) {
+				if i < int(parent.size()) {
 					right_sibling = parent.children[i+1]
 				}
 				k = i
@@ -391,6 +391,10 @@ func (node *Node) nmerge() {
 		} else if right_sibling != nil { // We need to loosen up the condition to make the example work. Removed  right_sibling.size()+1 == node.tree.branchingFactor
 			n1 = node
 			n2 = right_sibling
+		} else if left_sibling != nil {
+			n1 = left_sibling
+			n2 = node
+			k-- // so we know that k corresponds to n1
 		} else {
 			panic("no sibling has enough keys!")
 		}
@@ -419,14 +423,14 @@ func (node *Node) nmerge() {
 		if int(parent.size()) > k {
 			parent.keys = append(parent.keys[:k], parent.keys[k+1:]...)
 			parent.values = append(parent.values[:k+1], parent.values[k+2:]...)
-			if !node.isLeaf {
-				parent.keys = append(parent.keys[:k+1], parent.keys[k+2:]...)
+			if len(parent.children) > 0 {
+				parent.children = append(parent.children[:k+1], parent.children[k+2:]...)
 			}
 		} else if int(parent.size()) == k {
 			parent.keys = parent.keys[:k]
 			parent.values = parent.values[:k+1]
-			if !node.isLeaf {
-				parent.keys = parent.keys[:k+1]
+			if len(parent.children) > 0 {
+				parent.children = parent.children[:k+1]
 			}
 		}
 		// recurse: if the parent has now less then half_n nodes nmerge(parent)! TODO test this
