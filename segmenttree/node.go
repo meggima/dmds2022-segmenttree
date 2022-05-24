@@ -194,23 +194,27 @@ func (node *Node) split() *Node {
 
 	// N1 contains 1 ... n/2-1 instances and corresponding pointers if not a leaf child
 	n1 := &Node{
-		keys:     node.keys[:half_n-1],
-		values:   node.values[:half_n],
+		keys:     make([]uint32, half_n-1),
+		values:   make([]Addable, half_n),
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
 		isLeaf:   node.isLeaf,
 	}
+	copy(n1.keys, node.keys[:half_n-1])
+	copy(n1.values, node.values[:half_n])
 
 	// N2 contains n/2 ... n-1 instances and corresponding pointers if not a leaf child
 	n2 := &Node{
-		keys:     node.keys[half_n:],
-		values:   node.values[half_n:],
+		keys:     make([]uint32, len(node.keys[half_n:])),
+		values:   make([]Addable, len(node.values[half_n:])),
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
 		isLeaf:   node.isLeaf,
 	}
+	copy(n2.keys, node.keys[half_n:])
+	copy(n2.values, node.values[half_n:])
 
 	if !node.isLeaf {
 		n1.children = node.children[:half_n]
