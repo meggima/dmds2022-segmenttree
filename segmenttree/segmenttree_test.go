@@ -547,7 +547,6 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 	assert := assert.New(t)
 
 	n0 := &Node{
-		nodeId:   0,
 		keys:     []uint32{},
 		values:   []Addable{},
 		children: []*Node{},
