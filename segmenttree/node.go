@@ -179,7 +179,7 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 	}
 }
 
-func (node *Node) split() *Node {
+func (node *Node) split() {
 	if node.size() < 1 {
 		// Let's add an invariant to get rid of ugly edge cases, which are irrelevant in practice!
 		panic("A Node of size < 2 can not be split.")
@@ -224,17 +224,19 @@ func (node *Node) split() *Node {
 	// Case 1: Node is root. Create new root with empty values and hook n1, n2.
 	if node.tree.root == node {
 		parent = &Node{
-			keys:     []uint32{node.keys[half_n-1]},
-			values:   []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement},
+			keys:     make([]uint32, 1),
+			values:   make([]Addable, 2),
 			children: []*Node{n1, n2},
 			parent:   nil,
 			tree:     node.tree,
 			isLeaf:   false,
 		}
+		copy(parent.keys, []uint32{node.keys[half_n-1]})
+		copy(parent.values, []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement})
 		n1.parent = parent
 		n2.parent = parent
 		parent.tree.root = parent
-	} else {
+	} else if node.parent != nil {
 		// Case 2: Node has parent. Let's insert n1, n2 and shift the keys, values and children to the right.
 		parent = node.parent
 		parent.keys = append(parent.keys, parent.keys[len(parent.keys)-1])
@@ -244,7 +246,7 @@ func (node *Node) split() *Node {
 		for j, key := range parent.keys {
 			if key >= node.keys[half_n-1] || j == int(parent.size()-1) {
 				// change the following keys, values and children
-				for i, _ := range parent.keys[j+1:] {
+				for i := range parent.keys[j+1:] {
 					parent.keys[len(parent.keys)-i-1] = parent.keys[len(parent.keys)-i-2]
 					parent.values[len(parent.values)-i-2] = parent.values[len(parent.values)-i-3]
 					parent.children[len(parent.children)-i-2] = parent.children[len(parent.children)-i-3]
@@ -259,11 +261,12 @@ func (node *Node) split() *Node {
 				break
 			}
 		}
+	} else {
+		return // this case might happen if the parent was split and replaced but in the execution stack it is split again.
 	}
 	if parent.size()+1 > parent.tree.branchingFactor {
 		parent.split()
 	}
-	return n1
 }
 
 func (node *Node) size() uint32 {

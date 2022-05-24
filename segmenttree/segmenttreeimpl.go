@@ -71,7 +71,7 @@ func (tree *SegmentTreeImpl) rangeQuery(node *Node, interval Interval, value Add
 	for index, nodeInterval := range node.getIntervals() {
 		intersection := interval.IntersectionWith(nodeInterval)
 
-		if intersection == EmptyInterval {
+		if intersection.GetLength() == 0 {
 			continue
 		}
 
@@ -99,7 +99,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 
 		intersection := nodeInterval.IntersectionWith(tupleToInsert.interval)
 
-		if intersection == EmptyInterval {
+		if intersection.GetLength() == 0 {
 			// Do nothing
 		} else if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
 			// Do nothing
@@ -110,16 +110,16 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 				tree.insert(node.children[index], tupleToInsert)
 			} else {
 				index += node.insert(index, tupleToInsert)
-				if node.size()+1 > tree.branchingFactor {
-					node = node.split()
-				}
-				//intervals = node.getIntervals() // recalculate as they might have changed // TODO is this needed?
+				intervals = node.getIntervals() // recalculate as they might have changed
 			}
 		}
 		if index+1 >= len(intervals) {
 			has_next_interval = false
 		}
 		index++
+	}
+	if node.size()+1 > tree.branchingFactor {
+		node.split()
 	}
 
 }
