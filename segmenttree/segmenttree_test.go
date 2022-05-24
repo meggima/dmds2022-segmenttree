@@ -239,7 +239,6 @@ func TestInsertTwiceSameRangeSimpleElement(t *testing.T) {
 	assert := assert.New(t)
 
 	n0 := &Node{
-		nodeId:   0,
 		keys:     []uint32{},
 		values:   []Addable{Float(0)},
 		children: []*Node{},
@@ -395,7 +394,6 @@ func TestDelete2(t *testing.T) {
 // Yang et. al 2003, Fig 4
 func setupTree() *SegmentTreeImpl {
 	n1 := &Node{
-		nodeId:   1,
 		keys:     []uint32{5, 10},
 		values:   []Addable{Float(0), Float(2), Float(8)},
 		children: []*Node{},
@@ -403,7 +401,6 @@ func setupTree() *SegmentTreeImpl {
 	}
 
 	n2 := &Node{
-		nodeId:   2,
 		keys:     []uint32{20},
 		values:   []Addable{Float(5), Float(6)},
 		children: []*Node{},
@@ -411,7 +408,6 @@ func setupTree() *SegmentTreeImpl {
 	}
 
 	n3 := &Node{
-		nodeId:   3,
 		keys:     []uint32{35, 40},
 		values:   []Addable{Float(4), Float(8), Float(5)},
 		children: []*Node{},
@@ -419,7 +415,6 @@ func setupTree() *SegmentTreeImpl {
 	}
 
 	n4 := &Node{
-		nodeId:   4,
 		keys:     []uint32{50},
 		values:   []Addable{Float(1), Float(0)},
 		children: []*Node{},
@@ -427,7 +422,6 @@ func setupTree() *SegmentTreeImpl {
 	}
 
 	n0 := &Node{
-		nodeId:   0,
 		keys:     []uint32{15, 30, 45},
 		values:   []Addable{Float(0), Float(1), Float(0), Float(0)},
 		children: []*Node{n1, n2, n3, n4},
@@ -462,7 +456,6 @@ func TestSumDosageScenarioInsert(t *testing.T) {
 	assert := assert.New(t)
 
 	n0 := &Node{
-		nodeId:   0,
 		keys:     []uint32{},
 		values:   []Addable{Float(0)},
 		children: []*Node{},
