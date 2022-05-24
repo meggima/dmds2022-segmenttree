@@ -608,33 +608,6 @@ func TestInsertMatchingStartPoint2IntervallIndex1(t *testing.T) {
 	assert.Equal(t, Float(0), node.values[3])
 }
 
-func TestInsertMatchingStartPoint2IntervallIndex0(t *testing.T) {
-	// TODO to solve issue #5
-
-	// Arrange
-	node := &Node{
-		keys:   []uint32{10, 40},
-		values: []Addable{Float(0), Float(2), Float(0)},
-		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
-			branchingFactor: BRANCHING_FACTOR,
-		},
-	}
-	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}}
-
-	// Act
-	node.insert(0, intervalTuple)
-
-	// Assert
-	assert.Equal(t, uint32(10), node.keys[0])
-	assert.Equal(t, uint32(30), node.keys[1])
-	assert.Equal(t, uint32(40), node.keys[2])
-	assert.Equal(t, Float(0), node.values[0])
-	assert.Equal(t, Float(5), node.values[1])
-	assert.Equal(t, Float(2), node.values[2])
-	assert.Equal(t, Float(0), node.values[3])
-}
-
 func TestInsertMatchingStartPoint3(t *testing.T) {
 	// Arrange
 	node := &Node{
