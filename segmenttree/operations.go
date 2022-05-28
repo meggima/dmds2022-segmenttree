@@ -1,5 +1,7 @@
 package segmenttree
 
+import "math"
+
 func Sum(x Addable, y Addable) Addable {
 	return x.Add(y)
 }
@@ -55,6 +57,7 @@ type Addable interface {
 	Add(x Addable) Addable
 	Inverse() Addable
 	Subtract(x Addable) Addable
+	AsFloat64() float64
 }
 
 type AverageTuple struct {
@@ -82,6 +85,14 @@ func (x AverageTuple) Inverse() Addable {
 	}
 }
 
+func (x AverageTuple) AsFloat64() float64 {
+	if x.Count == 0 {
+		return math.NaN()
+	}
+
+	return float64(x.Sum) / float64(x.Count)
+}
+
 type Float float32
 
 func (x Float) Add(y Addable) Addable {
@@ -94,6 +105,10 @@ func (x Float) Inverse() Addable {
 
 func (x Float) Subtract(y Addable) Addable {
 	return x - y.(Float)
+}
+
+func (x Float) AsFloat64() float64 {
+	return float64(x)
 }
 
 func (x Float) Compare(y Float) int {
