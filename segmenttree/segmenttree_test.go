@@ -79,6 +79,28 @@ func TestGetWithinIntervalWholeRange(t *testing.T) {
 	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(50, math.MaxUint32), value: Float(0)}, result[9])
 }
 
+func TestGetWithinIntervalWholeRangeAsFloat64(t *testing.T) {
+	// Arrange
+	tree := setupTree()
+
+	// Act
+	result := tree.GetWithinInterval(Interval{start: 0, end: math.MaxUint32})
+
+	// Assert
+	assert.Len(t, result, 10)
+
+	assert.Equal(t, float64(0), result[0].value.AsFloat64())
+	assert.Equal(t, float64(2), result[1].value.AsFloat64())
+	assert.Equal(t, float64(8), result[2].value.AsFloat64())
+	assert.Equal(t, float64(6), result[3].value.AsFloat64())
+	assert.Equal(t, float64(7), result[4].value.AsFloat64())
+	assert.Equal(t, float64(4), result[5].value.AsFloat64())
+	assert.Equal(t, float64(8), result[6].value.AsFloat64())
+	assert.Equal(t, float64(5), result[7].value.AsFloat64())
+	assert.Equal(t, float64(1), result[8].value.AsFloat64())
+	assert.Equal(t, float64(0), result[9].value.AsFloat64())
+}
+
 func TestNewTree(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
@@ -736,4 +758,37 @@ func TestInsertRange(t *testing.T) {
 	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(40, 45), value: Float(5)}, result[7])
 	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(45, 50), value: Float(1)}, result[8])
 	assert.Equal(t, ValueIntervalTuple{interval: NewInterval(50, math.MaxUint32), value: Float(0)}, result[9])
+}
+
+func TestAverageDosageScenario(t *testing.T) {
+	// Arrange
+	aggregate := Aggregate{Average, InverseAverage, Identity, AverageTuple{Sum: 0, Count: 0}}
+
+	var testData []ValueIntervalTuple = []ValueIntervalTuple{
+		{interval: NewInterval(10, 40), value: AverageTuple{2, 1}},
+		{interval: NewInterval(10, 30), value: AverageTuple{3, 1}},
+		{interval: NewInterval(20, 40), value: AverageTuple{1, 1}},
+		{interval: NewInterval(5, 15), value: AverageTuple{2, 1}},
+		{interval: NewInterval(35, 45), value: AverageTuple{4, 1}},
+		{interval: NewInterval(10, 50), value: AverageTuple{1, 1}},
+	}
+
+	tree := NewSegmentTree(BRANCHING_FACTOR, aggregate)
+
+	// Act
+	tree.InsertRange(testData)
+	result := tree.GetWithinInterval(NewInterval(0, math.MaxUint32))
+
+	// Assert
+	assert.Len(t, result, 10)
+	assert.True(t, math.IsNaN(result[0].value.AsFloat64()))
+	assert.Equal(t, 2.0, result[1].value.AsFloat64())
+	assert.Equal(t, 2.0, result[2].value.AsFloat64())
+	assert.Equal(t, 2.0, result[3].value.AsFloat64())
+	assert.Equal(t, 1.75, result[4].value.AsFloat64())
+	assert.InDelta(t, 1.333333, result[5].value.AsFloat64(), 0.0001)
+	assert.Equal(t, 2.0, result[6].value.AsFloat64())
+	assert.Equal(t, 2.5, result[7].value.AsFloat64())
+	assert.Equal(t, 1.0, result[8].value.AsFloat64())
+	assert.True(t, math.IsNaN(result[9].value.AsFloat64()))
 }
