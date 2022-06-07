@@ -13,7 +13,7 @@ func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImp
 	}
 
 	tree.root = tree.newNode()
-	tree.root.values = append(tree.root.values, aggregate.neutralElement)
+	tree.root.values = append(tree.root.values, Float(0))
 
 	return tree
 }
