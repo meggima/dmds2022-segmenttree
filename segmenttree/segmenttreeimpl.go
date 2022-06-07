@@ -10,14 +10,12 @@ type SegmentTreeImpl struct {
 	root            *Node
 	aggregate       Aggregate
 	branchingFactor uint32
-	nextNodeId      uint32
 }
 
 func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImpl {
 	tree := &SegmentTreeImpl{
 		branchingFactor: branchingFactor,
 		aggregate:       aggregate,
-		nextNodeId:      1,
 	}
 
 	tree.root = tree.newNode()
@@ -28,7 +26,6 @@ func NewSegmentTree(branchingFactor uint32, aggregate Aggregate) *SegmentTreeImp
 
 func (t *SegmentTreeImpl) newNode() *Node {
 	node := &Node{
-		nodeId:   t.nextNodeId,
 		keys:     make([]uint32, t.branchingFactor+1),  // + 1 to account for an interval being split into three intervals
 		values:   make([]Addable, t.branchingFactor+2), // + 2 to account for an interval being split into three intervals
 		children: make([]*Node, t.branchingFactor+2),   // + 2 to account for an interval being split into three intervals
@@ -36,8 +33,6 @@ func (t *SegmentTreeImpl) newNode() *Node {
 		parent:   nil,
 		tree:     t,
 	}
-
-	t.nextNodeId += 1
 
 	return node
 }
@@ -81,7 +76,7 @@ func (tree *SegmentTreeImpl) rangeQuery(node *Node, interval Interval, value Add
 	for index, nodeInterval := range node.getIntervals() {
 		intersection := interval.IntersectionWith(nodeInterval)
 
-		if intersection == EmptyInterval {
+		if intersection.GetLength() == 0 {
 			continue
 		}
 
@@ -109,7 +104,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 
 		intersection := nodeInterval.IntersectionWith(tupleToInsert.interval)
 
-		if intersection == EmptyInterval {
+		if intersection.GetLength() == 0 {
 			// Do nothing
 		} else if index < len(node.values) && node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
 			// Do nothing
@@ -120,9 +115,6 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 				tree.insert(node.children[index], tupleToInsert)
 			} else {
 				index += node.insert(index, tupleToInsert)
-				if node.size()+1 > tree.branchingFactor {
-					node = node.split()
-				}
 				intervals = node.getIntervals() // recalculate as they might have changed
 			}
 		}
@@ -130,6 +122,9 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 			has_next_interval = false
 		}
 		index++
+	}
+	if node.size()+1 > tree.branchingFactor {
+		node.split()
 	}
 
 }

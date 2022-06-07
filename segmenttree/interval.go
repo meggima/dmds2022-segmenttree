@@ -34,3 +34,7 @@ func (interval Interval) IsSubsetOf(otherInterval Interval) bool {
 	return interval.start >= otherInterval.start &&
 		interval.end <= otherInterval.end
 }
+
+func (interval Interval) GetLength() uint32 {
+	return interval.end - interval.start
+}

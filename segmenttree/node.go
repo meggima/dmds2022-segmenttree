@@ -5,7 +5,6 @@ import "math"
 type Node struct {
 	/*
 			Size of a node is
-			id: 4 byte (could be removed)
 			keys: 4+4+4+ byte (reference, length, cap)  + b-1 * 4 byte
 			values: assume float32 --> 12 byte + b * 4 byte
 			children: 12 byte + l * 4 byte
@@ -13,16 +12,15 @@ type Node struct {
 			tree: 4 byte
 			isLeaf: 1 byte
 
-		This gives a total of  4 + 3*12 +(2*b-1) *4 + l * 4 + 8 +1 = 49 + (2*b-1) *4 + l * 4
+		This gives a total of  3*12 +(2*b-1) *4 + l * 4 + 8 +1 = 45 + (2*b-1) *4 + l * 4
 
 		Go determines the memory allocation for our structs, it will pad bytes to make sure the final memory
 		footprint is a multiple of 8 bytes
 		let's assume the default page size of linux with 4 kb = 4096 bytes
 
 		For simplicity set b = l, then we get a maximal branching factor b and a maximal leaf capacity l
-		of b=l=337 to fit into one disk page of 4 kb (removing the id and the isLeaf flag would lead to 338).
+		of b=l=337 to fit into one disk page of 4 kb.
 	*/
-	nodeId   uint32
 	keys     []uint32
 	values   []Addable
 	children []*Node
@@ -181,7 +179,7 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 	}
 }
 
-func (node *Node) split() *Node {
+func (node *Node) split() {
 	if node.size() < 1 {
 		// Let's add an invariant to get rid of ugly edge cases, which are irrelevant in practice!
 		panic("A Node of size < 2 can not be split.")
@@ -196,25 +194,27 @@ func (node *Node) split() *Node {
 
 	// N1 contains 1 ... n/2-1 instances and corresponding pointers if not a leaf child
 	n1 := &Node{
-		nodeId:   0, // TODO  This is basically useless, do we need it?
-		keys:     node.keys[:half_n-1],
-		values:   node.values[:half_n],
+		keys:     make([]uint32, half_n-1),
+		values:   make([]Addable, half_n),
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
 		isLeaf:   node.isLeaf,
 	}
+	copy(n1.keys, node.keys[:half_n-1])
+	copy(n1.values, node.values[:half_n])
 
 	// N2 contains n/2 ... n-1 instances and corresponding pointers if not a leaf child
 	n2 := &Node{
-		nodeId:   0, // TODO  This is basically useless, do we need it?
-		keys:     node.keys[half_n:],
-		values:   node.values[half_n:],
+		keys:     make([]uint32, len(node.keys[half_n:])),
+		values:   make([]Addable, len(node.values[half_n:])),
 		children: nil,
 		parent:   node.parent,
 		tree:     node.tree,
 		isLeaf:   node.isLeaf,
 	}
+	copy(n2.keys, node.keys[half_n:])
+	copy(n2.values, node.values[half_n:])
 
 	if !node.isLeaf {
 		n1.children = node.children[:half_n]
@@ -224,18 +224,19 @@ func (node *Node) split() *Node {
 	// Case 1: Node is root. Create new root with empty values and hook n1, n2.
 	if node.tree.root == node {
 		parent = &Node{
-			nodeId:   5, // This is basically useless
-			keys:     []uint32{node.keys[half_n-1]},
-			values:   []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement},
+			keys:     make([]uint32, 1),
+			values:   make([]Addable, 2),
 			children: []*Node{n1, n2},
 			parent:   nil,
 			tree:     node.tree,
 			isLeaf:   false,
 		}
+		copy(parent.keys, []uint32{node.keys[half_n-1]})
+		copy(parent.values, []Addable{node.tree.aggregate.neutralElement, node.tree.aggregate.neutralElement})
 		n1.parent = parent
 		n2.parent = parent
 		parent.tree.root = parent
-	} else {
+	} else if node.parent != nil {
 		// Case 2: Node has parent. Let's insert n1, n2 and shift the keys, values and children to the right.
 		parent = node.parent
 		parent.keys = append(parent.keys, parent.keys[len(parent.keys)-1])
@@ -245,7 +246,7 @@ func (node *Node) split() *Node {
 		for j, key := range parent.keys {
 			if key >= node.keys[half_n-1] || j == int(parent.size()-1) {
 				// change the following keys, values and children
-				for i, _ := range parent.keys[j+1:] {
+				for i := range parent.keys[j+1:] {
 					parent.keys[len(parent.keys)-i-1] = parent.keys[len(parent.keys)-i-2]
 					parent.values[len(parent.values)-i-2] = parent.values[len(parent.values)-i-3]
 					parent.children[len(parent.children)-i-2] = parent.children[len(parent.children)-i-3]
@@ -260,11 +261,12 @@ func (node *Node) split() *Node {
 				break
 			}
 		}
+	} else {
+		return // this case might happen if the parent was split and replaced but in the execution stack it is split again.
 	}
 	if parent.size()+1 > parent.tree.branchingFactor {
 		parent.split()
 	}
-	return n1
 }
 
 func (node *Node) size() uint32 {

@@ -1,6 +1,7 @@
 package segmenttree
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -74,5 +75,29 @@ func TestIsSubsetOf(t *testing.T) {
 
 		// Assert
 		assert.Equal(t, td.isSubset, res)
+	}
+}
+
+func TestGetLength(t *testing.T) {
+	// Arrange
+	testData := []struct {
+		a      Interval
+		length uint32
+	}{
+		{NewInterval(0, 0), 0},
+		{NewInterval(2, 2), 0},
+		{NewInterval(2, 3), 1},
+		{NewInterval(1, 3), 2},
+		{NewInterval(3, 5), 2},
+		{NewInterval(3, 5), 2},
+		{NewInterval(1, math.MaxUint32), math.MaxUint32 - 1},
+	}
+
+	for _, td := range testData {
+		// Act
+		res := td.a.GetLength()
+
+		// Assert
+		assert.Equal(t, td.length, res)
 	}
 }

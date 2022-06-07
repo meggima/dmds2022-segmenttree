@@ -608,33 +608,6 @@ func TestInsertMatchingStartPoint2IntervallIndex1(t *testing.T) {
 	assert.Equal(t, Float(0), node.values[3])
 }
 
-func TestInsertMatchingStartPoint2IntervallIndex0(t *testing.T) {
-	// TODO to solve issue #5
-
-	// Arrange
-	node := &Node{
-		keys:   []uint32{10, 40},
-		values: []Addable{Float(0), Float(2), Float(0)},
-		tree: &SegmentTreeImpl{
-			aggregate:       Aggregate{Sum, Identity, Float(0)},
-			branchingFactor: BRANCHING_FACTOR,
-		},
-	}
-	intervalTuple := ValueIntervalTuple{value: Float(3), interval: Interval{start: 10, end: 30}}
-
-	// Act
-	node.insert(0, intervalTuple)
-
-	// Assert
-	assert.Equal(t, uint32(10), node.keys[0])
-	assert.Equal(t, uint32(30), node.keys[1])
-	assert.Equal(t, uint32(40), node.keys[2])
-	assert.Equal(t, Float(0), node.values[0])
-	assert.Equal(t, Float(5), node.values[1])
-	assert.Equal(t, Float(2), node.values[2])
-	assert.Equal(t, Float(0), node.values[3])
-}
-
 func TestInsertMatchingStartPoint3(t *testing.T) {
 	// Arrange
 	node := &Node{
@@ -984,6 +957,71 @@ func TestSplitMostRightNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
 	assert.Equal(t, uint32(50), c13.keys[0])
 	assert.Equal(t, Float(1), c13.values[0])
 	assert.Equal(t, Float(0), c13.values[1])
+}
+
+// Fig 19 Split Leaf
+func TestSplitMostLefNonRootNodeIsLeafAndSplitsNotParent(t *testing.T) {
+	// Arrange
+	SBTree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: 4,
+	}
+	n0 := &Node{
+		keys:     []uint32{30},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{nil, nil, nil},
+		parent:   nil,
+		isLeaf:   false,
+		tree:     SBTree,
+	}
+	n10 := &Node{
+		keys:   []uint32{5, 10, 15, 20},
+		values: []Addable{Float(0), Float(2), Float(7), Float(5), Float(6)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+	n11 := &Node{
+		keys:   []uint32{40},
+		values: []Addable{Float(3), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   SBTree,
+	}
+
+	SBTree.root = n0
+	n0.children[0] = n10
+	n0.children[1] = n11
+
+	// Act (split node n11)
+	n10.split()
+
+	// Assert
+	n_root := SBTree.root
+	c10 := n_root.children[0]
+	c11 := n_root.children[1]
+	c12 := n_root.children[2]
+
+	assert.Equal(t, 15, int(n_root.keys[0]))
+	assert.Equal(t, 30, int(n_root.keys[1]))
+	assert.Equal(t, Float(0), n_root.values[0])
+	assert.Equal(t, Float(0), n_root.values[1])
+	assert.Equal(t, Float(0), n_root.values[2])
+
+	assert.Equal(t, uint32(5), c10.keys[0])
+	assert.Equal(t, uint32(10), c10.keys[1])
+	assert.Equal(t, Float(0), c10.values[0])
+	assert.Equal(t, Float(2), c10.values[1])
+	assert.Equal(t, Float(7), c10.values[2])
+
+	assert.Equal(t, uint32(20), c11.keys[0])
+	assert.Equal(t, Float(5), c11.values[0])
+	assert.Equal(t, Float(6), c11.values[1])
+
+	assert.Equal(t, uint32(40), c12.keys[0])
+	assert.Equal(t, Float(3), c12.values[0])
+	assert.Equal(t, Float(0), c12.values[1])
+
 }
 
 func TestSplitNonRootNodeIsLeafAndSplitsParentWhichIsNoLeaf(t *testing.T) {
