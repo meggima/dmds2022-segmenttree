@@ -1129,6 +1129,125 @@ func TestSplitNonRootNodeIsLeafAndSplitsParentWhichIsNoLeaf(t *testing.T) {
 	assert.Equal(t, Float(0), c24.values[1])
 }
 
+func TestIMergeOnlyOneKeyMergeTwoValues(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{12},
+		values: []Addable{Float(8), Float(8)},
+		isLeaf: true,
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+
+	// Act
+	node.imerge()
+
+	// Assert
+	assert.Equal(t, 0, int(node.size()))
+	assert.Equal(t, Float(8), node.values[0])
+}
+
+func TestIMergeOnlyTwoKeysMergeTwoValues(t *testing.T) {
+	// Arrange
+	node := &Node{
+		keys:   []uint32{5, 7},
+		values: []Addable{Float(0), Float(2), Float(2)},
+		isLeaf: true,
+		tree: &SegmentTreeImpl{
+			aggregate:       Aggregate{Sum, Identity, Float(0)},
+			branchingFactor: BRANCHING_FACTOR,
+		},
+	}
+
+	// Act
+	node.imerge()
+
+	// Assert
+	assert.Equal(t, 1, int(node.size()))
+	assert.Equal(t, 5, int(node.keys[0]))
+	assert.Equal(t, Float(0), node.values[0])
+	assert.Equal(t, Float(2), node.values[1])
+}
+
+func TestNMerge(t *testing.T) {
+	// Arrange
+	tree := &SegmentTreeImpl{
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+	n0 := &Node{
+		keys:   []uint32{30},
+		values: []Addable{Float(0), Float(0)},
+		tree:   tree,
+	}
+	n01 := &Node{
+		keys:   []uint32{10, 15},
+		values: []Addable{Float(0), Float(0), Float(1)},
+		parent: n0,
+		isLeaf: false,
+		tree:   tree,
+	}
+	n02 := &Node{
+		keys:   []uint32{45},
+		values: []Addable{Float(0), Float(0)},
+		parent: n0,
+		isLeaf: true,
+		tree:   tree,
+	}
+	n11 := &Node{
+		keys:   []uint32{5},
+		values: []Addable{Float(0), Float(2)},
+		isLeaf: true,
+		parent: n01,
+		tree:   tree,
+	}
+	n12 := &Node{
+		keys:   []uint32{},
+		values: []Addable{Float(8)},
+		isLeaf: true,
+		parent: n01,
+		tree:   tree,
+	}
+	n2 := &Node{
+		keys:   []uint32{20},
+		values: []Addable{Float(5), Float(6)},
+		isLeaf: true,
+		parent: n01,
+		tree:   tree,
+	}
+	tree.root = n0
+	n0.children = []*Node{n01, n02}
+	n01.children = []*Node{n11, n12, n2}
+
+	// Act
+	n12.nmerge()
+
+	// Assert
+	n01 = tree.root.children[0]
+	n11 = n01.children[0]
+	n2n := n01.children[1]
+
+	assert.Equal(t, 1, int(n01.size()))
+	assert.Equal(t, uint32(10), n01.keys[0])
+	assert.Equal(t, Float(0), n01.values[0])
+	assert.Equal(t, Float(0), n01.values[1])
+
+	assert.Equal(t, 1, int(n11.size()))
+	assert.Equal(t, uint32(5), n11.keys[0])
+	assert.Equal(t, Float(0), n11.values[0])
+	assert.Equal(t, Float(2), n11.values[1])
+
+	assert.Equal(t, 2, int(n2n.size()))
+	assert.Equal(t, uint32(15), n2n.keys[0])
+	assert.Equal(t, uint32(20), n2n.keys[1])
+	assert.Equal(t, Float(8), n2n.values[0])
+	assert.Equal(t, Float(6), n2n.values[1])
+	assert.Equal(t, Float(7), n2n.values[2])
+
+}
+
 func SetupNodes() (*Node, *Node, *Node, *Node, *Node) {
 	n0 := &Node{
 		keys:     []uint32{15, 30, 45},

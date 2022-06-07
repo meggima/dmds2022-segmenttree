@@ -52,6 +52,11 @@ func (tree *SegmentTreeImpl) Insert(value ValueIntervalTuple) {
 }
 
 func (tree *SegmentTreeImpl) Delete(value ValueIntervalTuple) {
+	valueToInsert := tree.aggregate.additionElement(value.value)
+
+	valueToInsert = valueToInsert.Inverse()
+
+	tree.insert(tree.root, ValueIntervalTuple{value: valueToInsert, interval: value.interval})
 
 }
 
@@ -101,7 +106,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 
 		if intersection.GetLength() == 0 {
 			// Do nothing
-		} else if node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
+		} else if index < len(node.values) && node.values[index] == tree.aggregate.operation(node.values[index], tupleToInsert.value) {
 			// Do nothing
 		} else if nodeInterval.IsSubsetOf(tupleToInsert.interval) {
 			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
