@@ -631,7 +631,35 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 
 	// Act
 	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 10, end: 50}})
+	assert.Equal(uint32(3), tree.root.size())
+	assert.Equal(uint32(15), tree.root.keys[0])
+	assert.Equal(uint32(30), tree.root.keys[1])
+	assert.Equal(uint32(40), tree.root.keys[2])
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Equal(Float(0), tree.root.values[1])
+	assert.Equal(Float(-1), tree.root.values[2])
+	assert.Equal(Float(0), tree.root.values[3])
+
+	assert.Equal(uint32(10), tree.root.children[0].keys[1])
+	assert.Equal(Float(7), tree.root.children[0].values[2])
+
+	assert.Equal(uint32(45), tree.root.children[3].keys[0])
+	assert.Equal(Float(4), tree.root.children[3].values[0])
+
 	tree.Delete(ValueIntervalTuple{value: Float(4), interval: Interval{start: 35, end: 45}})
+
+	assert.Equal(uint32(2), tree.root.size())
+	assert.Equal(uint32(15), tree.root.keys[0])
+	assert.Equal(uint32(30), tree.root.keys[1])
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Equal(Float(0), tree.root.values[1])
+	assert.Equal(Float(0), tree.root.values[2])
+
+	assert.Equal(uint32(1), tree.root.children[2].size())
+	assert.Equal(uint32(40), tree.root.children[2].keys[0])
+	assert.Equal(Float(3), tree.root.children[2].values[0])
+	assert.Equal(Float(0), tree.root.children[2].values[1])
+
 	// merge and remove node
 	tree.Delete(ValueIntervalTuple{value: Float(2), interval: Interval{start: 5, end: 15}})
 	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}})
@@ -646,6 +674,8 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 
 	assert.Len(n0.keys, 0)
 	assert.Equal(Float(0), n0.values[0])
-	assert.Len(n0.values, 0)
-	assert.Len(n0.children, 0)
+	assert.Len(n0.values, 1)
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Len(n0.children, 1)
+	assert.Nil(tree.root.children[0])
 }

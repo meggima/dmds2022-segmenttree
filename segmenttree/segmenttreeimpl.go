@@ -99,6 +99,8 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 	has_next_interval := true
 	index := 0
 	intervals := node.getIntervals()
+	sizeOffset := 0
+	nodeSize := int(node.size())
 	for has_next_interval {
 		nodeInterval := intervals[index]
 
@@ -112,7 +114,11 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 			node.values[index] = tree.aggregate.operation(node.values[index], tupleToInsert.value)
 		} else {
 			if !node.isLeaf {
-				tree.insert(node.children[index], tupleToInsert)
+				if index+1 > int(node.size()) && nodeSize > int(node.size()) {
+					sizeOffset--
+					tupleToInsert.interval.start = intervals[index].start
+				}
+				tree.insert(node.children[index+sizeOffset], tupleToInsert)
 			} else {
 				index += node.insert(index, tupleToInsert)
 				intervals = node.getIntervals() // recalculate as they might have changed
@@ -126,7 +132,7 @@ func (tree *SegmentTreeImpl) insert(node *Node, tupleToInsert ValueIntervalTuple
 	if node.size()+1 > tree.branchingFactor {
 		node.split()
 	}
-	nodeSize := int(node.size())
+	nodeSize = int(node.size())
 	for i := 0; i < nodeSize; i++ {
 		node.imerge()
 	}

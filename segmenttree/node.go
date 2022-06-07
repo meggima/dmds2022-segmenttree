@@ -120,7 +120,7 @@ func (node *Node) insert(intervalIndex int, tupleToInsert ValueIntervalTuple) in
 			node.values[i] = node.values[i-2]
 		}
 
-		node.values[intervalIndex+2] = node.values[intervalIndex] // Original value // TODO breaks if empty node and len(values)<intervalIndex
+		node.values[intervalIndex+2] = node.values[intervalIndex] // Original value
 		node.values[intervalIndex+1] = node.tree.aggregate.operation(node.values[intervalIndex], tupleToInsert.value)
 
 		return 2 // one interval got split into three (= 2 new)
@@ -289,6 +289,9 @@ func (node *Node) imerge() {
 		if int(node.size()) > j && value == node.values[j+1] {
 			node.keys = append(node.keys[:j], node.keys[j+1:]...)
 			node.values = append(node.values[:j], node.values[j+1:]...)
+			if len(node.children) > 0 {
+				node.children = append(node.children[:j], node.children[j+1:]...)
+			}
 			break
 		} else if int(node.size()+1) == j && value == node.values[j+1] {
 			node.keys = node.keys[:j]
@@ -312,11 +315,11 @@ func (node *Node) nmerge() {
 
 	if node.tree.root == node { // Case 1: node is root
 		//node has only one child
-		if len(node.children) == 1 {
+		if len(node.children) == 1 && node.children[0] != nil {
 			node.tree.root = node.children[0]
-			node.tree.root.parent = nil
+			node.children[0].parent = nil
 			for _, value := range node.tree.root.values {
-				value = value.Add(node.values[0]) // TODO test this
+				value = value.Add(node.values[0])
 			}
 		}
 		//do nothing
@@ -328,6 +331,9 @@ func (node *Node) nmerge() {
 		var left_sibling *Node
 		var k int
 		parent := node.parent
+		if parent == nil {
+			return
+		}
 		for i, _ := range parent.children {
 			if parent.children[i] == node {
 				if i > 0 {
@@ -340,8 +346,8 @@ func (node *Node) nmerge() {
 				break
 			}
 		}
-		// Case2.1: If N' the right sibling of node has at least more than half_n +1 intervals, steal the first one  of N'! TODO test this
-		if right_sibling != nil && int(right_sibling.size()) > halfN {
+		// Case2.1: If N' the right sibling of node has at least more than half_n +1 intervals, steal the first one  of N'!
+		if right_sibling != nil && int(right_sibling.size()) >= halfN {
 			for i, value := range node.values {
 				node.values[i] = parent.values[k].Add(value)
 			}
@@ -355,13 +361,15 @@ func (node *Node) nmerge() {
 			// cleanup sibling
 			right_sibling.keys = right_sibling.keys[1:]
 			right_sibling.values = right_sibling.values[1:]
-			right_sibling.children = right_sibling.children[1:]
+			if len(right_sibling.children) > 0 {
+				right_sibling.children = right_sibling.children[1:]
+			}
 
 			return
 		}
 
-		// Case2.2: If N' the left sibling of N has more than half_n intervals Steal the last one of N'! TODO test this
-		if left_sibling != nil && int(left_sibling.size()) > halfN {
+		// Case2.2: If N' the left sibling of N has more than half_n intervals Steal the last one of N'!
+		if left_sibling != nil && int(left_sibling.size()) >= halfN {
 			// in the paper N' the left sibling has now index k and N has index k+1 in the parent. Let's ignore this to keep things a bit more readable!
 			for i, value := range node.values {
 				node.values[i] = parent.values[k].Add(value)
@@ -373,17 +381,19 @@ func (node *Node) nmerge() {
 			if !node.isLeaf {
 				node.children = append([]*Node{left_sibling.children[len(left_sibling.children)-1]}, node.children...)
 			}
-			parent.keys[k-1] = left_sibling.keys[len(left_sibling.keys)-2]
+			parent.keys[k-1] = left_sibling.keys[int(left_sibling.size())-1]
 			// cleanup sibling
-			left_sibling.keys = left_sibling.keys[:len(left_sibling.keys)-2]
-			left_sibling.values = left_sibling.values[:len(left_sibling.values)-2]
-			left_sibling.children = left_sibling.children[:len(left_sibling.children)-2]
+			left_sibling.keys = left_sibling.keys[:len(left_sibling.keys)-1]
+			left_sibling.values = left_sibling.values[:len(left_sibling.values)-1]
+			if len(left_sibling.children) > 0 {
+				left_sibling.children = left_sibling.children[:len(left_sibling.children)-1]
+			}
 			return
 		}
 		// Case2.3: Otherwise merge N with a sibling into a new node and place it in the parent of node.
 		var n1 *Node
 		var n2 *Node
-		// TODO in practice there might be the case that left right sibling is nil. in this case we should take the left.
+		// in practice there might be the case that left right sibling is nil. in this case we should take the left.
 		if left_sibling != nil && left_sibling.size()+1 == node.tree.branchingFactor {
 			n1 = left_sibling
 			n2 = node
@@ -400,13 +410,15 @@ func (node *Node) nmerge() {
 		}
 
 		newN := &Node{
-			keys:     append(n1.keys, n2.keys...),
+			keys:     make([]uint32, n1.size()+n2.size()),
 			values:   []Addable{},
-			children: append(n1.children, n2.children...),
+			children: make([]*Node, n1.size()+n2.size()+2),
 			parent:   parent,
 			tree:     node.tree,
 			isLeaf:   node.isLeaf,
 		}
+		copy(newN.keys, append(n1.keys, n2.keys...))
+		copy(newN.children, append(n1.children, n2.children...))
 
 		newN.keys = append([]uint32{parent.keys[k]}, newN.keys...)
 
@@ -433,7 +445,7 @@ func (node *Node) nmerge() {
 				parent.children = parent.children[:k+1]
 			}
 		}
-		// recurse: if the parent has now less then half_n nodes nmerge(parent)! TODO test this
+		// recurse: if the parent has now less then half_n nodes nmerge(parent)!
 		if int(parent.size())+1 <= halfN {
 			parent.nmerge()
 		}
