@@ -336,59 +336,104 @@ func TestDelete2(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree := setupTree()
-	tree.Insert(ValueIntervalTuple{value: Float(1), interval: Interval{start: 7, end: 12}})
+	n11 := &Node{
+		keys:     []uint32{5, 7},
+		values:   []Addable{Float(0), Float(2), Float(3)},
+		children: []*Node{},
+		isLeaf:   true,
+	}
+
+	n12 := &Node{
+		keys:     []uint32{12},
+		values:   []Addable{Float(9), Float(8)},
+		children: []*Node{},
+		isLeaf:   true,
+	}
+
+	n13 := &Node{
+		keys:     []uint32{20},
+		values:   []Addable{Float(5), Float(6)},
+		children: []*Node{},
+		isLeaf:   true,
+	}
+
+	n1 := &Node{
+		keys:     []uint32{10, 15},
+		values:   []Addable{Float(0), Float(0), Float(1)},
+		children: []*Node{n11, n12, n13},
+		isLeaf:   false,
+	}
+
+	n2 := &Node{
+		keys:     []uint32{45},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{},
+		isLeaf:   true,
+	}
+
+	n0 := &Node{
+		keys:     []uint32{30},
+		values:   []Addable{Float(0), Float(0)},
+		children: []*Node{n1, n2},
+		isLeaf:   false,
+	}
+
+	n0.parent = nil
+	n1.parent = n0
+	n2.parent = n0
+	n11.parent = n1
+	n12.parent = n1
+	n13.parent = n1
+
+	tree := &SegmentTreeImpl{
+		root:            n0,
+		aggregate:       Aggregate{Sum, Identity, Float(0)},
+		branchingFactor: BRANCHING_FACTOR,
+	}
+
+	n0.tree = tree
+	n1.tree = tree
+	n2.tree = tree
+	n11.tree = tree
+	n12.tree = tree
+	n13.tree = tree
 
 	// Act
 	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 7, end: 12}})
 
 	// Assert
-	n0 := tree.root
-	n01 := n0.children[0]
-	n02 := n0.children[1]
-	n11 := n01.children[0]
-	n2 := n01.children[1]
-	n3 := n02.children[0]
-	n4 := n02.children[1]
+	r0 := tree.root
+	r1 := n0.children[0]
+	r2 := n0.children[1]
+	r11 := r1.children[0]
+	r12 := r1.children[1]
 
-	assert.Equal(uint32(1), n0.size())
-	assert.Equal(uint32(30), n0.keys[0])
-	assert.Equal(Float(0), n0.values[0])
-	assert.Equal(Float(0), n0.values[1])
+	assert.Equal(uint32(1), r0.size())
+	assert.Equal(uint32(30), r0.keys[0])
+	assert.Equal(Float(0), r0.values[0])
+	assert.Equal(Float(0), r0.values[1])
 
-	assert.Equal(uint32(1), n01.size())
-	assert.Equal(uint32(10), n01.keys[0])
-	assert.Equal(Float(0), n01.values[0])
-	assert.Equal(Float(0), n01.values[1])
+	assert.Equal(uint32(1), r1.size())
+	assert.Equal(uint32(10), r1.keys[0])
+	assert.Equal(Float(0), r1.values[0])
+	assert.Equal(Float(0), r1.values[1])
 
-	assert.Equal(uint32(1), n02.size())
-	assert.Equal(uint32(45), n02.keys[0])
-	assert.Equal(Float(0), n02.values[0])
-	assert.Equal(Float(0), n02.values[1])
+	assert.Equal(uint32(1), r2.size())
+	assert.Equal(uint32(45), r2.keys[0])
+	assert.Equal(Float(0), r2.values[0])
+	assert.Equal(Float(0), r2.values[1])
 
-	assert.Equal(uint32(1), n11.size())
-	assert.Equal(uint32(5), n11.keys[0])
-	assert.Equal(Float(0), n11.values[0])
-	assert.Equal(Float(2), n11.values[1])
+	assert.Equal(uint32(1), r11.size())
+	assert.Equal(uint32(5), r11.keys[0])
+	assert.Equal(Float(0), r11.values[0])
+	assert.Equal(Float(2), r11.values[1])
 
-	assert.Equal(uint32(2), n2.size())
-	assert.Equal(uint32(15), n2.keys[0])
-	assert.Equal(uint32(20), n2.keys[1])
-	assert.Equal(Float(8), n2.values[0])
-	assert.Equal(Float(6), n2.values[1])
-	assert.Equal(Float(7), n2.values[2])
-
-	assert.Equal(uint32(2), n3.size())
-	assert.Equal(uint32(35), n3.keys[0])
-	assert.Equal(uint32(40), n3.keys[1])
-	assert.Equal(Float(4), n3.values[0])
-	assert.Equal(Float(8), n3.values[1])
-	assert.Equal(Float(5), n3.values[2])
-
-	assert.Equal(uint32(1), n4.size())
-	assert.Equal(uint32(50), n4.keys[0])
-	assert.Equal(Float(1), n4.values[0])
-	assert.Equal(Float(0), n4.values[1])
+	assert.Equal(uint32(2), r12.size())
+	assert.Equal(uint32(15), r12.keys[0])
+	assert.Equal(uint32(20), r12.keys[1])
+	assert.Equal(Float(8), r12.values[0])
+	assert.Equal(Float(6), r12.values[1])
+	assert.Equal(Float(7), r12.values[2])
 }
 
 func TestDeleteSimpleElement(t *testing.T) {
@@ -396,7 +441,6 @@ func TestDeleteSimpleElement(t *testing.T) {
 	assert := assert.New(t)
 
 	n0 := &Node{
-		nodeId:   0,
 		keys:     []uint32{10, 40},
 		values:   []Addable{Float(0), Float(2), Float(0)},
 		children: []*Node{},
@@ -587,7 +631,35 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 
 	// Act
 	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 10, end: 50}})
+	assert.Equal(uint32(3), tree.root.size())
+	assert.Equal(uint32(15), tree.root.keys[0])
+	assert.Equal(uint32(30), tree.root.keys[1])
+	assert.Equal(uint32(40), tree.root.keys[2])
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Equal(Float(0), tree.root.values[1])
+	assert.Equal(Float(-1), tree.root.values[2])
+	assert.Equal(Float(0), tree.root.values[3])
+
+	assert.Equal(uint32(10), tree.root.children[0].keys[1])
+	assert.Equal(Float(7), tree.root.children[0].values[2])
+
+	assert.Equal(uint32(45), tree.root.children[3].keys[0])
+	assert.Equal(Float(4), tree.root.children[3].values[0])
+
 	tree.Delete(ValueIntervalTuple{value: Float(4), interval: Interval{start: 35, end: 45}})
+
+	assert.Equal(uint32(2), tree.root.size())
+	assert.Equal(uint32(15), tree.root.keys[0])
+	assert.Equal(uint32(30), tree.root.keys[1])
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Equal(Float(0), tree.root.values[1])
+	assert.Equal(Float(0), tree.root.values[2])
+
+	assert.Equal(uint32(1), tree.root.children[2].size())
+	assert.Equal(uint32(40), tree.root.children[2].keys[0])
+	assert.Equal(Float(3), tree.root.children[2].values[0])
+	assert.Equal(Float(0), tree.root.children[2].values[1])
+
 	// merge and remove node
 	tree.Delete(ValueIntervalTuple{value: Float(2), interval: Interval{start: 5, end: 15}})
 	tree.Delete(ValueIntervalTuple{value: Float(1), interval: Interval{start: 20, end: 40}})
@@ -602,6 +674,8 @@ func TestSumDosageScenarioDelete(t *testing.T) {
 
 	assert.Len(n0.keys, 0)
 	assert.Equal(Float(0), n0.values[0])
-	assert.Len(n0.values, 0)
-	assert.Len(n0.children, 0)
+	assert.Len(n0.values, 1)
+	assert.Equal(Float(0), tree.root.values[0])
+	assert.Len(n0.children, 1)
+	assert.Nil(tree.root.children[0])
 }
